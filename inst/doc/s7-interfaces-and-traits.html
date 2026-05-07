@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Go-Like Interfaces and Rust-Like Traits on S7</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Go-Like Interfaces and Rust-Like Traits on
+S7</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><code>s7contract</code> is a small experiment: can interface and
+trait ideas be expressed on top of S7 without replacing S7’s method
+system? The package answers yes, but with an important constraint. S7
+still owns dispatch. <code>s7contract</code> only records and checks
+contracts around ordinary S7 generics.</p>
+<p>The most natural layer is a Go-like structural interface. In S7,
+operations are already ordinary functions such as <code>draw(x)</code>
+or <code>area(x)</code>, and methods are registered for classes. A
+structural interface can therefore be just a named set of required
+generics.</p>
+<p>A Rust-like trait is also possible, but it needs an explicit
+registry. That extra machinery is useful for default methods and
+associated metadata, but it is less native to S7 because R does not have
+Rust’s compile-time trait bounds, coherence rules, or associated type
+checker.</p>
+</div>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>S7 is a functional object-oriented system: methods belong to generic
+functions, not to objects. The call is
+<code>generic(object, ...)</code>, not <code>object$generic(...)</code>.
+That makes S7 close in spirit to protocols defined by behavior.</p>
+<p>Go interfaces are structural: a basic interface describes required
+methods, and a type satisfies the interface when it has those methods.
+Go style also favors small interfaces defined at the point of use: do
+not define an interface beside a single implementation merely to make
+that implementation conform. In S7 terms, define classes, generics, and
+methods where the behavior lives, then let the consumer define the
+protocol it accepts. Rust traits are nominal and explicit: an
+implementation is declared for a type, and traits may also contain
+defaults and associated items. <code>s7contract</code> maps these ideas
+to S7 as follows.</p>
+<pre class="text"><code>S7 generic       operation, e.g. area(x)
+S7 method        implementation for a class
+Go-like interface set of required S7 generics
+Rust-like trait  explicit implementation record plus S7 methods</code></pre>
+<p>This also clarifies what kind of “type” an interface defines. An S7
+class is a nominal representation type: it says how an object is
+constructed and validated. An interface is a behavioral or protocol
+type: it says what operations must be available. Both are useful, but
+they answer different questions.</p>
+<p>Packages such as <code>lambda.r</code> explore a different
+functional-programming route in R, with pattern-matching-style function
+clauses, guards, and optional type constraints. <code>s7contract</code>
+stays closer to S7: it does not create a new function clause language.
+By default it checks whether S7 can find methods for required generics,
+or whether an explicit trait implementation has been registered.
+Optional argument and return specifications can be checked when
+evaluating a call with <code>with()</code> or <code>%::%</code>.</p>
+</div>
+<div id="a-structural-interface" class="section level2">
+<h2>A structural interface</h2>
+<p>The classic drawing example remains useful because the behavior is
+visible. A <code>Drawable</code> object is anything for which S7 can
+find a <code>draw()</code> method. In real packages, this interface
+would usually live near the consumer that needs to draw things, not
+necessarily in the package that defines <code>Circle</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>area <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;area&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;draw&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>Circle <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Circle&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">r =</span> class_double))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>Rect <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Rect&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">w =</span> class_double, <span class="at">h =</span> class_double))</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">method</span>(area, Circle) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) pi <span class="sc">*</span> x<span class="sc">@</span>r<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">method</span>(draw, Circle) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sprintf</span>(<span class="st">&quot;circle(r = %s)&quot;</span>, x<span class="sc">@</span>r)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">method</span>(area, Rect) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x<span class="sc">@</span>w <span class="sc">*</span> x<span class="sc">@</span>h</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>Drawable <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(<span class="st">&quot;Drawable&quot;</span>, <span class="at">generics =</span> <span class="fu">list</span>(<span class="at">draw =</span> draw))</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>Shape <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(<span class="st">&quot;Shape&quot;</span>, <span class="at">generics =</span> <span class="fu">list</span>(<span class="at">area =</span> area), <span class="at">parents =</span> Drawable)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="fu">implements</span>(Circle, Shape)</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="fu">implements</span>(Rect, Shape)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="fu">missing_requirements</span>(Rect, Shape)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;      interface requirement    ok                               message</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; draw     Shape        draw FALSE Can&#39;t find method for `draw(&lt;Rect&gt;)`.</span></span></code></pre></div>
+<p>A consumer keeps ordinary S7 style. The assertion documents the
+expected behavior; the actual call is still normal dispatch through
+<code>draw(x)</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>render <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">assert_implements</span>(x, Drawable)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">draw</span>(x)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>}</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="fu">render</span>(<span class="fu">Circle</span>(<span class="at">r =</span> <span class="dv">2</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;circle(r = 2)&quot;</span></span></code></pre></div>
+<p>The same boundary is convenient in tests. A mock only needs the
+behavior the consumer asks for.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>MockDrawable <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;MockDrawable&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">method</span>(draw, MockDrawable) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="st">&quot;mock drawing&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">render</span>(<span class="fu">MockDrawable</span>())</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;mock drawing&quot;</span></span></code></pre></div>
+<p>This is the main reason structural interfaces fit S7 well. They add a
+small runtime check around a dispatch model that S7 already has. The
+practical API shape is the Go maxim adapted to R: accept objects that
+satisfy a small protocol; return ordinary, concrete R or S7 values.</p>
+</div>
+<div id="when-the-whole-protocol-is-a-class-family" class="section level2">
+<h2>When the whole protocol is a class family</h2>
+<p>Some R APIs intentionally define a large protocol up front. DBI is
+the useful example: it is not just one consumer-local interface, but a
+package-level standard built around nominal connection, driver, and
+result classes plus many generic functions. That fits the “abstract data
+type” exception to the point-of-use rule.</p>
+<p>In S7, the analogous design is a class family for identity and
+representation, plus generics for behavior. Consumers can still depend
+on a smaller interface when they only need part of the protocol.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>DatabaseConnection <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;DatabaseConnection&quot;</span>, <span class="at">abstract =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>MemoryConnection <span class="ot">&lt;-</span> <span class="fu">new_class</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="st">&quot;MemoryConnection&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">parent =</span> DatabaseConnection,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">tables =</span> class_list)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>db_tables <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;db_tables&quot;</span>, <span class="st">&quot;con&quot;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>db_read_table <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="st">&quot;db_read_table&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="st">&quot;con&quot;</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="cf">function</span>(con, name) <span class="fu">S7_dispatch</span>()</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>)</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="fu">method</span>(db_tables, MemoryConnection) <span class="ot">&lt;-</span> <span class="cf">function</span>(con) <span class="fu">names</span>(con<span class="sc">@</span>tables)</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="fu">method</span>(db_read_table, MemoryConnection) <span class="ot">&lt;-</span> <span class="cf">function</span>(con, name) con<span class="sc">@</span>tables[[name]]</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>TableReader <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>  <span class="st">&quot;TableReader&quot;</span>,</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>    <span class="at">db_tables =</span> <span class="fu">interface_requirement</span>(db_tables, <span class="at">returns =</span> class_character),</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>    <span class="at">db_read_table =</span> <span class="fu">interface_requirement</span>(</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>      db_read_table,</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>      <span class="at">args =</span> <span class="fu">list</span>(<span class="at">name =</span> class_character),</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>      <span class="at">returns =</span> class_data.frame</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>    )</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  )</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>)</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>first_table <span class="ot">&lt;-</span> <span class="cf">function</span>(con) {</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>  <span class="fu">assert_implements</span>(con, TableReader)</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>  <span class="fu">db_read_table</span>(con, <span class="fu">db_tables</span>(con)[[<span class="dv">1</span>]])</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>}</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">MemoryConnection</span>(<span class="at">tables =</span> <span class="fu">list</span>(<span class="at">iris =</span> <span class="fu">head</span>(iris, <span class="dv">2</span>)))</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a><span class="fu">first_table</span>(con)</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a><span class="co">#&gt;   Sepal.Length Sepal.Width Petal.Length Petal.Width Species</span></span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a><span class="co">#&gt; 1          5.1         3.5          1.4         0.2  setosa</span></span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a><span class="co">#&gt; 2          4.9         3.0          1.4         0.2  setosa</span></span></code></pre></div>
+<p>The class says “this object is a database connection”. The interface
+says “this consumer needs table-reading behavior”. A full DBI-like
+package may own the broad class family; ordinary downstream functions
+should still prefer the smallest protocol they use.</p>
+</div>
+<div id="progressive-argument-and-return-checks" class="section level2">
+<h2>Progressive argument and return checks</h2>
+<p>Interface requirements can optionally carry argument and return
+specifications. The default is permissive: unspecified arguments are not
+checked, and the return specification defaults to
+<code>S7::class_any</code>. When specifications are present, expressions
+can be evaluated in a contract mask with either <code>with()</code> or
+the lambda.r-style <code>%::%</code> operator. Calls to required
+generics inside that expression are checked.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>Canvas <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Canvas&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>draw_on <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="st">&quot;draw_on&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;canvas&quot;</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="cf">function</span>(x, canvas, position, ...) <span class="fu">S7_dispatch</span>()</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">method</span>(draw_on, <span class="fu">list</span>(Circle, Canvas)) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, canvas, position, ...) {</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;circle(r = %s) at %s&quot;</span>, x<span class="sc">@</span>r, position)</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>}</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>DrawableOnCanvas <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="st">&quot;DrawableOnCanvas&quot;</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    <span class="at">draw_on =</span> <span class="fu">interface_requirement</span>(</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>      draw_on,</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>      <span class="at">args =</span> <span class="fu">list</span>(<span class="at">canvas =</span> Canvas, <span class="at">position =</span> class_integer),</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>      <span class="at">returns =</span> class_character</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>    )</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>  )</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>canvas <span class="ot">&lt;-</span> <span class="fu">Canvas</span>()</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>circle <span class="ot">&lt;-</span> <span class="fu">Circle</span>(<span class="at">r =</span> <span class="dv">2</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="fu">implements</span>(Circle, DrawableOnCanvas)</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="fu">with</span>(DrawableOnCanvas, <span class="fu">draw_on</span>(circle, canvas, <span class="at">position =</span> <span class="dv">1</span><span class="dt">L</span>))</span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; [1] &quot;circle(r = 2) at 1&quot;</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="fu">draw_on</span>(circle, canvas, <span class="at">position =</span> <span class="dv">1</span><span class="dt">L</span>) <span class="sc">%::%</span> DrawableOnCanvas</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; [1] &quot;circle(r = 2) at 1&quot;</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>checked_draw <span class="ot">&lt;-</span> <span class="fu">with</span>(DrawableOnCanvas, {</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="fu">draw_on</span>(x, canvas, <span class="at">position =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>})</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a><span class="fu">checked_draw</span>(circle)</span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="co">#&gt; [1] &quot;circle(r = 2) at 1&quot;</span></span></code></pre></div>
+<p>A method can satisfy the S7 method shape but still return the wrong
+kind of value. The checked call, including a function returned from
+<code>with()</code>, catches that after ordinary S7 dispatch has
+run.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>BadCircle <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;BadCircle&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">r =</span> class_double))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">method</span>(draw_on, <span class="fu">list</span>(BadCircle, Canvas)) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, canvas, position, ...) {</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  x<span class="sc">@</span>r</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>}</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">tryCatch</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="fu">with</span>(DrawableOnCanvas, <span class="fu">draw_on</span>(<span class="fu">BadCircle</span>(<span class="at">r =</span> <span class="dv">2</span>), canvas, <span class="at">position =</span> <span class="dv">1</span><span class="dt">L</span>)),</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="fu">conditionMessage</span>(e)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Return value must be &lt;character&gt;, not &lt;double&gt;&quot;</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="fu">tryCatch</span>(</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="fu">checked_draw</span>(<span class="fu">BadCircle</span>(<span class="at">r =</span> <span class="dv">2</span>)),</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) <span class="fu">conditionMessage</span>(e)</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>)</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Return value must be &lt;character&gt;, not &lt;double&gt;&quot;</span></span></code></pre></div>
+<p>The input checks use S7 classes and S7 multiple dispatch. In this
+example, <code>canvas</code> is also a dispatch argument, so
+<code>implements(Circle, DrawableOnCanvas)</code> asks S7 for a
+<code>draw_on(&lt;Circle&gt;, &lt;Canvas&gt;)</code> method. The return
+value can only be checked after the call has run, which is why
+<code>with()</code> and <code>%::%</code> are useful.</p>
+</div>
+<div id="number-like-behavior" class="section level2">
+<h2>Number-like behavior</h2>
+<p>A general <code>Number</code> interface is tempting, but it should be
+treated carefully. Base R arithmetic includes vectorization, recycling,
+missing values, attributes, and binary operations. A small number-like
+protocol is more honest: it says only which operations a particular
+consumer needs.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>num_zero <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;num_zero&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>num_add <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;num_add&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>num_scale <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;num_scale&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>NumberLike <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="st">&quot;NumberLike&quot;</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">zero =</span> num_zero,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="at">add =</span> num_add,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    <span class="at">scale =</span> num_scale</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  )</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="fu">method</span>(num_zero, class_double) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="dv">0</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="fu">method</span>(num_add, class_double) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) x <span class="sc">+</span> y</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="fu">method</span>(num_scale, class_double) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, k) x <span class="sc">*</span> k</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="fu">implements</span>(class_double, NumberLike)</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="fu">num_add</span>(<span class="dv">10</span>, <span class="dv">5</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt; [1] 15</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="fu">num_scale</span>(<span class="dv">10</span>, <span class="fl">0.5</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; [1] 5</span></span></code></pre></div>
+<p>This interface does not prove mathematical laws such as associativity
+or an identity element. It only says that these operations are present.
+If those laws matter, they should be described in the documentation and
+tested with examples that are specific to the domain.</p>
+</div>
+<div id="vector-like-behavior" class="section level2">
+<h2>Vector-like behavior</h2>
+<p>A vector-like contract is often more practical. Many algorithms only
+need a length, a way to slice, and a way to expose values.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>vec_length <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;vec_length&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>vec_slice <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;vec_slice&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>vec_values <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;vec_values&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>VectorLike <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="st">&quot;VectorLike&quot;</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    <span class="at">length =</span> vec_length,</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    <span class="at">slice =</span> vec_slice,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    <span class="at">values =</span> vec_values</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  )</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>ReadDepth <span class="ot">&lt;-</span> <span class="fu">new_class</span>(</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="st">&quot;ReadDepth&quot;</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">position =</span> class_integer,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    <span class="at">depth =</span> class_double</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>  ),</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>  <span class="at">validator =</span> <span class="cf">function</span>(self) {</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(self<span class="sc">@</span>position) <span class="sc">!=</span> <span class="fu">length</span>(self<span class="sc">@</span>depth)) {</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>      <span class="st">&quot;@position and @depth must have the same length&quot;</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>    }</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>  }</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="fu">method</span>(vec_length, ReadDepth) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">length</span>(x<span class="sc">@</span>depth)</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="fu">method</span>(vec_slice, ReadDepth) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, i) {</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>  <span class="fu">ReadDepth</span>(<span class="at">position =</span> x<span class="sc">@</span>position[i], <span class="at">depth =</span> x<span class="sc">@</span>depth[i])</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>}</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="fu">method</span>(vec_values, ReadDepth) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x<span class="sc">@</span>depth</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>coverage <span class="ot">&lt;-</span> <span class="fu">ReadDepth</span>(</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>  <span class="at">position =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>  <span class="at">depth =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">15</span>, <span class="dv">9</span>, <span class="dv">20</span>, <span class="dv">17</span>)</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>)</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="fu">implements</span>(coverage, VectorLike)</span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="fu">vec_values</span>(<span class="fu">vec_slice</span>(coverage, <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>))</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#&gt; [1] 15  9 20</span></span></code></pre></div>
+<p>A function can depend on this small protocol without knowing how the
+object is represented internally.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>window_mean <span class="ot">&lt;-</span> <span class="cf">function</span>(x, i) {</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">assert_implements</span>(x, VectorLike)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">mean</span>(<span class="fu">vec_values</span>(<span class="fu">vec_slice</span>(x, i)))</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>}</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="fu">window_mean</span>(coverage, <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; [1] 14.66667</span></span></code></pre></div>
+<p>This kind of interface is best used at package boundaries. It is not
+meant to replace base vectors, S7 classes, or mature vector frameworks;
+it names the small piece of behavior a consumer needs.</p>
+</div>
+<div id="an-explicit-trait" class="section level2">
+<h2>An explicit trait</h2>
+<p>A Rust-like trait adds nominal intent. A class may have the right
+methods structurally, but it does not have the trait until
+<code>impl_trait()</code> records that implementation.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>perimeter <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;perimeter&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>Measurable <span class="ot">&lt;-</span> <span class="fu">new_trait</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="st">&quot;Measurable&quot;</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">methods =</span> <span class="fu">list</span>(</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">area =</span> <span class="fu">trait_method</span>(area),</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="at">perimeter =</span> <span class="fu">trait_method</span>(perimeter, <span class="at">default =</span> <span class="cf">function</span>(x) <span class="cn">NA_real_</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  ),</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  <span class="at">assoc_consts =</span> <span class="fu">c</span>(<span class="st">&quot;UNITS&quot;</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="fu">impl_trait</span>(</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  Measurable,</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>  Circle,</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>  <span class="at">methods =</span> <span class="fu">list</span>(<span class="at">area =</span> <span class="cf">function</span>(x) pi <span class="sc">*</span> x<span class="sc">@</span>r<span class="sc">^</span><span class="dv">2</span>),</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>  <span class="at">assoc_consts =</span> <span class="fu">list</span>(<span class="at">UNITS =</span> <span class="st">&quot;unitless&quot;</span>),</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>)</span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; Overwriting method area(&lt;Circle&gt;)</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="fu">has_trait</span>(Circle, Measurable)</span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="fu">trait_call</span>(Measurable, <span class="st">&quot;area&quot;</span>, <span class="fu">Circle</span>(<span class="at">r =</span> <span class="dv">2</span>))</span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; [1] 12.56637</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="fu">trait_call</span>(Measurable, <span class="st">&quot;perimeter&quot;</span>, <span class="fu">Circle</span>(<span class="at">r =</span> <span class="dv">2</span>))</span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; [1] NA</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="fu">trait_assoc_const</span>(Measurable, Circle, <span class="st">&quot;UNITS&quot;</span>)</span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; [1] &quot;unitless&quot;</span></span></code></pre></div>
+<p>The useful distinction is intent. A structural interface asks whether
+operations are available. An explicit trait asks whether a package
+author has declared a class to implement a named contract. The trait
+layer can also store associated metadata such as <code>UNITS</code>,
+which is awkward in a purely structural interface.</p>
+</div>
+<div id="a-haskell-style-dictionary-object" class="section level2">
+<h2>A Haskell-style dictionary object</h2>
+<p>Haskell type classes are often explained as dictionaries: a
+<code>Monad m</code> constraint is operationally evidence that
+<code>m</code> has <code>pure</code> and <code>bind</code>. R can model
+that idea directly because functions are first-class values and S7 can
+validate function-valued properties.</p>
+<p>The example below defines a tiny <code>Maybe</code> algebraic data
+type, then stores its monad operations in an S7 dictionary object. The
+<code>s7contract</code> interface checks that the dictionary exposes the
+operations a consumer expects.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>Maybe <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Maybe&quot;</span>, <span class="at">abstract =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>Nothing <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Nothing&quot;</span>, <span class="at">parent =</span> Maybe)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>Just <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Just&quot;</span>, <span class="at">parent =</span> Maybe, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">value =</span> class_any))</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>MonadDict <span class="ot">&lt;-</span> <span class="fu">new_class</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="st">&quot;MonadDict&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    <span class="at">name =</span> class_character,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    <span class="at">pure =</span> class_function,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>    <span class="at">bind =</span> class_function</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  )</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>)</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>dict_pure <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;dict_pure&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>dict_bind <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;dict_bind&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>MonadDictionary <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="st">&quot;MonadDictionary&quot;</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>    <span class="at">pure =</span> dict_pure,</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>    <span class="at">bind =</span> dict_bind</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>  )</span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>)</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="fu">method</span>(dict_pure, MonadDict) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, value) {</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  (x<span class="sc">@</span>pure)(value)</span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>}</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a><span class="fu">method</span>(dict_bind, MonadDict) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, mx, f) {</span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>  (x<span class="sc">@</span>bind)(mx, f)</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>}</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a>MaybeMonad <span class="ot">&lt;-</span> <span class="fu">MonadDict</span>(</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;Maybe&quot;</span>,</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a>  <span class="at">pure =</span> <span class="cf">function</span>(value) <span class="fu">Just</span>(<span class="at">value =</span> value),</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>  <span class="at">bind =</span> <span class="cf">function</span>(mx, f) {</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">S7_inherits</span>(mx, Nothing)) {</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a>      <span class="fu">Nothing</span>()</span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a>      <span class="fu">f</span>(mx<span class="sc">@</span>value)</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a>    }</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a>  }</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a>)</span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a></span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a><span class="fu">implements</span>(MaybeMonad, MonadDictionary)</span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Now the dictionary can be passed around as an ordinary R object.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">dict_bind</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  MaybeMonad,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">Just</span>(<span class="at">value =</span> <span class="dv">2</span>),</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(MaybeMonad, x <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; &lt;Just&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;  @ value: num 3</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="fu">dict_bind</span>(</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  MaybeMonad,</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="fu">Nothing</span>(),</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(MaybeMonad, x <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>)</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; &lt;Nothing&gt;</span></span></code></pre></div>
+<p>The interface checks operation availability. The monad laws are
+semantic properties, so they belong in tests. A small law check can
+still be written in plain R.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>maybe_equal <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">S7_inherits</span>(x, Nothing) <span class="sc">&amp;&amp;</span> <span class="fu">S7_inherits</span>(y, Nothing)) {</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">TRUE</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  }</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">S7_inherits</span>(x, Just) <span class="sc">&amp;&amp;</span> <span class="fu">S7_inherits</span>(y, Just)) {</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">identical</span>(x<span class="sc">@</span>value, y<span class="sc">@</span>value))</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  }</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="cn">FALSE</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>}</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(MaybeMonad, x <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(MaybeMonad, x <span class="sc">*</span> <span class="dv">2</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>mx <span class="ot">&lt;-</span> <span class="fu">Just</span>(<span class="at">value =</span> <span class="dv">10</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="fu">c</span>(</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>  <span class="at">left_identity =</span> <span class="fu">maybe_equal</span>(</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>    <span class="fu">dict_bind</span>(MaybeMonad, <span class="fu">dict_pure</span>(MaybeMonad, <span class="dv">10</span>), f),</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>    <span class="fu">f</span>(<span class="dv">10</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>  ),</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>  <span class="at">right_identity =</span> <span class="fu">maybe_equal</span>(</span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>    <span class="fu">dict_bind</span>(MaybeMonad, mx, <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(MaybeMonad, x)),</span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>    mx</span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>  ),</span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>  <span class="at">associativity =</span> <span class="fu">maybe_equal</span>(</span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a>    <span class="fu">dict_bind</span>(MaybeMonad, <span class="fu">dict_bind</span>(MaybeMonad, mx, f), g),</span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>    <span class="fu">dict_bind</span>(MaybeMonad, mx, <span class="cf">function</span>(x) <span class="fu">dict_bind</span>(MaybeMonad, <span class="fu">f</span>(x), g))</span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a>  )</span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a>)</span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a><span class="co">#&gt;  left_identity right_identity  associativity </span></span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a><span class="co">#&gt;           TRUE           TRUE           TRUE</span></span></code></pre></div>
+<p>This is not Haskell’s static kind system. It is a concrete R/S7
+encoding of the same operational idea: a type-class instance can be
+represented as a runtime object containing functions, and an interface
+can state which functions must be available.</p>
+</div>
+<div id="which-feels-more-natural" class="section level2">
+<h2>Which feels more natural?</h2>
+<p>For functional OOP in S7, Go-like structural interfaces are the
+default fit. S7 already makes generic functions the center of dispatch,
+so an interface as a set of required generics is small and
+idiomatic.</p>
+<p>Rust-like traits are heavier but useful when accidental compatibility
+would be a problem. They make sense for plugin systems, adapters, or
+domain protocols where a package should explicitly claim conformance and
+provide metadata or defaults.</p>
+<p>The practical rule is simple: start with a structural interface when
+the consumer only needs behavior; use a trait when the declaration
+itself carries meaning.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li>The S7 package documentation: <a href="https://rconsortium.github.io/S7/" class="uri">https://rconsortium.github.io/S7/</a>.</li>
+<li>The Go specification, especially interface types: <a href="https://go.dev/ref/spec#Interface_types" class="uri">https://go.dev/ref/spec#Interface_types</a>.</li>
+<li>Chewxy, “How To Use Go Interfaces”: <a href="https://blog.chewxy.com/2018/03/18/golang-interfaces/" class="uri">https://blog.chewxy.com/2018/03/18/golang-interfaces/</a>.</li>
+<li>The Rust book chapter on traits: <a href="https://doc.rust-lang.org/book/ch10-02-traits.html" class="uri">https://doc.rust-lang.org/book/ch10-02-traits.html</a>.</li>
+<li>The Rust reference chapter on traits: <a href="https://doc.rust-lang.org/reference/items/traits.html" class="uri">https://doc.rust-lang.org/reference/items/traits.html</a>.</li>
+<li>The <code>lambda.r</code> package on CRAN: <a href="https://cran.r-project.org/package=lambda.r" class="uri">https://cran.r-project.org/package=lambda.r</a>.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

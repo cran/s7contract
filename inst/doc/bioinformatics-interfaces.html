@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Bioinformatics Containers as Interfaces</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Bioinformatics Containers as
+Interfaces</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span></code></pre></div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Bioinformatics packages often exchange rich containers rather than
+plain matrices. Bioconductor’s <code>SummarizedExperiment</code>, for
+example, keeps assays, feature metadata, sample metadata, names, and
+validity rules synchronized. This vignette does not try to rebuild that
+class. It uses a small toy container to show what an interface can and
+cannot express.</p>
+<p>The useful idea is an adapter boundary. A downstream function might
+not need a specific container class. It might only need to retrieve one
+assay matrix, or it might need assay names plus feature and sample
+names. That small behavior can be written as an S7 interface at the
+point where the downstream function consumes it.</p>
+</div>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>A class and an interface answer different design questions. A class
+describes representation and invariants: where the assays live, how
+metadata is stored, and what must be true after construction or
+subsetting. An interface describes behavior: which operations a consumer
+may call.</p>
+<p>This distinction matters for bioinformatics. A behavioral interface
+can make small examples, tests, and adapters easier to write, but it
+does not replace a well-established interoperability class. It cannot
+enforce genome builds, biological interpretation, delayed computation,
+or the full set of conventions used by Bioconductor containers.</p>
+</div>
+<div id="a-toy-assay-container" class="section level2">
+<h2>A toy assay container</h2>
+<p>The example class stores a named list of assays plus row and column
+metadata. The validator only checks the dimensions needed below.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>MiniSummarizedExperiment <span class="ot">&lt;-</span> <span class="fu">new_class</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="st">&quot;MiniSummarizedExperiment&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">assays =</span> class_list,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">row_data =</span> class_data.frame,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="at">col_data =</span> class_data.frame</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  ),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">validator =</span> <span class="cf">function</span>(self) {</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(self<span class="sc">@</span>assays) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;@assays must contain at least one matrix&quot;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>    }</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    dims <span class="ot">&lt;-</span> <span class="fu">lapply</span>(self<span class="sc">@</span>assays, dim)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">vapply</span>(dims, is.null, <span class="fu">logical</span>(<span class="dv">1</span>)))) {</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;every assay must be matrix-like&quot;</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    }</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>    first_dim <span class="ot">&lt;-</span> dims[[<span class="dv">1</span>]]</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>    same_dim <span class="ot">&lt;-</span> <span class="fu">vapply</span>(dims, identical, <span class="fu">logical</span>(<span class="dv">1</span>), first_dim)</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">all</span>(same_dim)) {</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;all assays must have the same dimensions&quot;</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>    }</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">nrow</span>(self<span class="sc">@</span>row_data) <span class="sc">!=</span> first_dim[[<span class="dv">1</span>]]) {</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;@row_data must have one row per assay feature&quot;</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>    }</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">nrow</span>(self<span class="sc">@</span>col_data) <span class="sc">!=</span> first_dim[[<span class="dv">2</span>]]) {</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;@col_data must have one row per assay sample&quot;</span>)</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>    }</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>  }</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>)</span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>counts <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">12</span>, <span class="dv">8</span>),</span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">3</span>,</span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>  <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;geneA&quot;</span>, <span class="st">&quot;geneB&quot;</span>, <span class="st">&quot;geneC&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;sample1&quot;</span>, <span class="st">&quot;sample2&quot;</span>))</span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>)</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>mini <span class="ot">&lt;-</span> <span class="fu">MiniSummarizedExperiment</span>(</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  <span class="at">assays =</span> <span class="fu">list</span>(<span class="at">counts =</span> counts, <span class="at">logcounts =</span> <span class="fu">log1p</span>(counts)),</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  <span class="at">row_data =</span> <span class="fu">data.frame</span>(<span class="at">gc =</span> <span class="fu">c</span>(<span class="fl">0.42</span>, <span class="fl">0.51</span>, <span class="fl">0.37</span>), <span class="at">row.names =</span> <span class="fu">rownames</span>(counts)),</span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  <span class="at">col_data =</span> <span class="fu">data.frame</span>(<span class="at">condition =</span> <span class="fu">c</span>(<span class="st">&quot;control&quot;</span>, <span class="st">&quot;treated&quot;</span>), <span class="at">row.names =</span> <span class="fu">colnames</span>(counts))</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="operations-and-a-consumer-owned-interface" class="section level2">
+<h2>Operations and a consumer-owned interface</h2>
+<p>Adapters expose behavior through ordinary S7 generics. The toy
+container below supports assay names, feature names, sample names, and
+assay lookup, but a consumer should only require the operations it
+actually uses.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>assay_names <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;assay_names&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>feature_names <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;feature_names&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>sample_names <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;sample_names&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>assay_matrix <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;assay_matrix&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">method</span>(assay_names, MiniSummarizedExperiment) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">names</span>(x<span class="sc">@</span>assays)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">method</span>(feature_names, MiniSummarizedExperiment) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">rownames</span>(x<span class="sc">@</span>assays[[<span class="dv">1</span>]])</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">method</span>(sample_names, MiniSummarizedExperiment) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">colnames</span>(x<span class="sc">@</span>assays[[<span class="dv">1</span>]])</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">method</span>(assay_matrix, MiniSummarizedExperiment) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">name =</span> <span class="fu">assay_names</span>(x)[[<span class="dv">1</span>]]) {</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  x<span class="sc">@</span>assays[[name]]</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>}</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">assay_names</span>(mini)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; [1] &quot;counts&quot;    &quot;logcounts&quot;</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="fu">sample_names</span>(mini)</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;sample1&quot; &quot;sample2&quot;</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="fu">assay_matrix</span>(mini, <span class="st">&quot;counts&quot;</span>)[, <span class="st">&quot;sample1&quot;</span>]</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; geneA geneB geneC </span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;    10     0     3</span></span></code></pre></div>
+<p>The interface belongs at the point of use. A library-size calculation
+does not need feature metadata or sample metadata; it only needs to
+retrieve one assay matrix. This mirrors the Go pattern
+<code>func Takes(db Database) error</code>: accept the small protocol
+the function needs, not a concrete database or a giant package
+interface.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>LibrarySizeInput <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="st">&quot;LibrarySizeInput&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(<span class="at">assay_matrix =</span> assay_matrix)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>library_size <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">assay =</span> <span class="st">&quot;counts&quot;</span>) {</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="fu">assert_implements</span>(x, LibrarySizeInput)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  mat <span class="ot">&lt;-</span> <span class="fu">assay_matrix</span>(x, assay)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="fu">colSums</span>(mat)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>}</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="fu">implements</span>(mini, LibrarySizeInput)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="fu">library_size</span>(mini)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; sample1 sample2 </span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt;      13      24</span></span></code></pre></div>
+<p>The payoff is testing. A unit test does not need to construct a
+realistic <code>MiniSummarizedExperiment</code> or a full Bioconductor
+object. It can provide a tiny mock that implements exactly the
+consumer-owned protocol.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>MockAssays <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;MockAssays&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">assays =</span> class_list))</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">method</span>(assay_matrix, MockAssays) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">name =</span> <span class="st">&quot;counts&quot;</span>) {</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  x<span class="sc">@</span>assays[[name]]</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>}</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>mock_counts <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">2</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;geneA&quot;</span>, <span class="st">&quot;geneB&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;sampleA&quot;</span>, <span class="st">&quot;sampleB&quot;</span>))</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>mock <span class="ot">&lt;-</span> <span class="fu">MockAssays</span>(<span class="at">assays =</span> <span class="fu">list</span>(<span class="at">counts =</span> mock_counts))</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">implements</span>(mock, LibrarySizeInput)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">library_size</span>(mock)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; sampleA sampleB </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;       3       7</span></span></code></pre></div>
+<p>This is the productive use case. A package can write against a small
+protocol, return an ordinary vector, and let separate adapters provide
+methods for concrete containers.</p>
+</div>
+<div id="when-an-explicit-trait-helps" class="section level2">
+<h2>When an explicit trait helps</h2>
+<p>A trait is useful when structural compatibility is not enough. Here
+the trait records an explicit implementation and stores an associated
+constant describing assay orientation.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>ExperimentLike <span class="ot">&lt;-</span> <span class="fu">new_trait</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;ExperimentLike&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">methods =</span> <span class="fu">list</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">assay_names =</span> <span class="fu">trait_method</span>(assay_names),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">feature_names =</span> <span class="fu">trait_method</span>(feature_names),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">sample_names =</span> <span class="fu">trait_method</span>(sample_names),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">assay_matrix =</span> <span class="fu">trait_method</span>(assay_matrix)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  ),</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">assoc_consts =</span> <span class="fu">c</span>(<span class="st">&quot;ASSAY_ORIENTATION&quot;</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">impl_trait</span>(</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  ExperimentLike,</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  MiniSummarizedExperiment,</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>  <span class="at">methods =</span> <span class="fu">list</span>(</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    <span class="at">assay_names =</span> <span class="cf">function</span>(x) <span class="fu">names</span>(x<span class="sc">@</span>assays),</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    <span class="at">feature_names =</span> <span class="cf">function</span>(x) <span class="fu">rownames</span>(x<span class="sc">@</span>assays[[<span class="dv">1</span>]]),</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    <span class="at">sample_names =</span> <span class="cf">function</span>(x) <span class="fu">colnames</span>(x<span class="sc">@</span>assays[[<span class="dv">1</span>]]),</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>    <span class="at">assay_matrix =</span> <span class="cf">function</span>(x, <span class="at">name =</span> <span class="fu">assay_names</span>(x)[[<span class="dv">1</span>]]) x<span class="sc">@</span>assays[[name]]</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  ),</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>  <span class="at">assoc_consts =</span> <span class="fu">list</span>(<span class="at">ASSAY_ORIENTATION =</span> <span class="st">&quot;features_by_samples&quot;</span>),</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  <span class="at">replace =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>)</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a><span class="fu">has_trait</span>(mini, ExperimentLike)</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a><span class="fu">trait_assoc_const</span>(ExperimentLike, mini, <span class="st">&quot;ASSAY_ORIENTATION&quot;</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a><span class="co">#&gt; [1] &quot;features_by_samples&quot;</span></span></code></pre></div>
+</div>
+<div id="design-cautions" class="section level2">
+<h2>Design cautions</h2>
+<p>It would be a mistake to define one large interface or trait that
+tries to cover every bioinformatics object. Assay matrices, genomic
+ranges, variant calls, and single-cell objects have different invariants
+and different performance needs. If a consumer only needs
+<code>assay_matrix()</code>, do not make it depend on feature metadata,
+sample metadata, genome ranges, and delayed computation as well. Small
+interfaces are easier to satisfy correctly and easier to test.</p>
+<p>It would also be a mistake to claim that an interface proves
+biological correctness. Method availability does not prove that samples
+are comparable, that row ranges use the same genome build, or that an
+assay transform is appropriate for a downstream model. Those checks
+should remain explicit and domain-specific.</p>
+<p>The narrow conclusion is useful enough: interfaces can mimic a small
+behavioral slice of a class such as <code>SummarizedExperiment</code>,
+but they should not replace the class or its ecosystem.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li>The Bioconductor <code>SummarizedExperiment</code> package: <a href="https://bioconductor.org/packages/SummarizedExperiment/" class="uri">https://bioconductor.org/packages/SummarizedExperiment/</a>.</li>
+<li>Morgan et al. (2023), “Orchestrating high-throughput genomic
+analysis with Bioconductor”: <a href="https://bioconductor.org/help/publications/" class="uri">https://bioconductor.org/help/publications/</a>.</li>
+<li>The S7 package documentation: <a href="https://rconsortium.github.io/S7/" class="uri">https://rconsortium.github.io/S7/</a>.</li>
+<li>Chewxy, “How To Use Go Interfaces”: <a href="https://blog.chewxy.com/2018/03/18/golang-interfaces/" class="uri">https://blog.chewxy.com/2018/03/18/golang-interfaces/</a>.</li>
+<li>The <code>s7contract</code> interface and trait vignette in this
+package.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
