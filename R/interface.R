@@ -5,14 +5,13 @@
 #' and a class or object satisfies it when S7 can find a method for every
 #' required generic.
 #'
-#' This deliberately mirrors Go's basic interfaces defined only by methods. The
-#' intended style is to define small interfaces at the point where consuming code
-#' needs a behavior, not beside a single concrete implementation. Define S7
+#' This mirrors Go's basic interfaces defined only by methods. Define small
+#' interfaces at the point where consuming code needs a behavior. Define S7
 #' classes, generics, and methods normally; then let consumers name the protocol
-#' they accept. Up-front interfaces can still be useful for deliberate package
+#' they accept. Up-front interfaces are also useful for package
 #' protocols, abstract data types, or recursive protocols.
 #'
-#' It does not attempt to emulate Go's full post-1.18 type-set language such as
+#' Go's full post-1.18 type-set language is outside this model, including
 #' tilde type terms, unions of concrete types, or pointer/value receiver rules.
 #'
 #' @param name For `new_interface()`, the interface name. For
@@ -86,7 +85,8 @@ new_interface <- function(
 #'   runtime argument checking with `with()` or `%::%`. Arguments named in
 #'   `args` are also checked against generic and method formals during
 #'   conformance checks. Dispatch arguments other than the first can use S7
-#'   classes or unions to refine multiple-dispatch requirements.
+#'   classes or unions to refine multiple-dispatch requirements. Every concrete
+#'   combination in those unions must have a compatible method.
 #' @param returns Optional S7 class, interface, or trait for runtime return
 #'   checking with `with()` or `%::%`; defaults to `S7::class_any`.
 #' @rdname new_interface
@@ -99,7 +99,7 @@ interface_requirement <- function(
 ) {
   .check_s7_generic(generic, "generic")
   if (is.null(name)) {
-    name <- .generic_label(generic)
+    name <- generic@name
   }
   if (!is.character(name) || length(name) != 1 || !nzchar(name)) {
     .abort("`name` must be a non-empty string.")
@@ -110,21 +110,6 @@ interface_requirement <- function(
     generic = generic,
     args = .normalise_type_specs(args, "args"),
     returns = .normalise_return_spec(returns)
-  )
-}
-
-.as_interface_requirement <- function(x, name = NULL) {
-  if (.is_interface_requirement(x)) {
-    if (!is.null(name)) {
-      x@name <- name
-    }
-    return(x)
-  }
-  if (is.function(x)) {
-    return(interface_requirement(x, name = name))
-  }
-  .abort(
-    "Interface requirements must be S7 generics or interface_requirement() objects."
   )
 }
 
@@ -149,7 +134,12 @@ interface_requirement <- function(
   out <- vector("list", length(generics))
   for (i in seq_along(generics)) {
     nm <- if (nzchar(nms[[i]])) nms[[i]] else NULL
-    req <- .as_interface_requirement(generics[[i]], name = nm)
+    req <- generics[[i]]
+    if (.is_interface_requirement(req)) {
+      if (!is.null(nm)) req@name <- nm
+    } else {
+      req <- interface_requirement(req, name = nm)
+    }
     out[[i]] <- req
     nms[[i]] <- req@name
   }

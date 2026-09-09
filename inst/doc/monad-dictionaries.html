@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>A Maybe Dictionary on S7</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">A Maybe Dictionary on S7</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span></code></pre></div>
+<p>This S7 dictionary stores <code>pure</code> and <code>bind</code> as
+functions. <code>Just(value)</code> carries a value;
+<code>Nothing()</code> represents absence. An interface checks operation
+availability, while laws state the required behavior.</p>
+<div id="the-dictionary" class="section level2">
+<h2>The dictionary</h2>
+<p><code>pure</code> wraps a value in <code>Just</code>.
+<code>bind</code> passes a <code>Just</code> payload to a function
+returning Maybe, and propagates <code>Nothing</code> without calling
+that function.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>Maybe <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Maybe&quot;</span>, <span class="at">abstract =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>Nothing <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Nothing&quot;</span>, <span class="at">parent =</span> Maybe)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>Just <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;Just&quot;</span>, <span class="at">parent =</span> Maybe, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">value =</span> class_any))</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>MonadDict <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;MonadDict&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">name =</span> class_character, <span class="at">pure =</span> class_function, <span class="at">bind =</span> class_function</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>))</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>dict_pure <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;dict_pure&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="cf">function</span>(x, value) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>dict_bind <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;dict_bind&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="cf">function</span>(x, mx, f) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>MonadDictionary <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(<span class="st">&quot;MonadDictionary&quot;</span>, <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">pure =</span> dict_pure, <span class="at">bind =</span> dict_bind</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>))</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="fu">method</span>(dict_pure, MonadDict) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, value) (x<span class="sc">@</span>pure)(value)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="fu">method</span>(dict_bind, MonadDict) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, mx, f) (x<span class="sc">@</span>bind)(mx, f)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>MaybeMonad <span class="ot">&lt;-</span> <span class="fu">MonadDict</span>(</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;Maybe&quot;</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="at">pure =</span> <span class="cf">function</span>(value) <span class="fu">Just</span>(<span class="at">value =</span> value),</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="at">bind =</span> <span class="cf">function</span>(mx, f) {</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">S7_inherits</span>(mx, Nothing)) <span class="fu">Nothing</span>() <span class="cf">else</span> <span class="fu">f</span>(mx<span class="sc">@</span>value)</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  }</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>)</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="fu">implements</span>(MaybeMonad, MonadDictionary)</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Binding <code>Nothing</code> leaves the second callback
+unevaluated:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">dict_bind</span>(MaybeMonad, <span class="fu">Just</span>(<span class="at">value =</span> <span class="dv">2</span><span class="dt">L</span>), <span class="cf">function</span>(x) <span class="fu">Just</span>(<span class="at">value =</span> x <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; &lt;Just&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt;  @ value: int 3</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">dict_bind</span>(MaybeMonad, <span class="fu">Nothing</span>(), <span class="cf">function</span>(x) <span class="fu">stop</span>(<span class="st">&quot;must not be called&quot;</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; &lt;Nothing&gt;</span></span></code></pre></div>
+</div>
+<div id="generated-values-and-functions" class="section level2">
+<h2>Generated values and functions</h2>
+<p>The input domain is <code>Nothing</code> or <code>Just</code>
+containing one integer from -10 to 10, with equal constructor
+probabilities. Functions come from three equally likely families: always
+return <code>Nothing</code>, add an integer from -5 to 5, or retain
+values at least a generated threshold in that range. Integer ranges
+expand with size. These functions are total on the tested inputs and
+intermediate values, which stay between -20 and 20.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>maybe_values <span class="ot">&lt;-</span> <span class="fu">gen_choice</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">gen_constant</span>(<span class="fu">Nothing</span>()),</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">gen_map</span>(<span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">10</span><span class="dt">L</span>, <span class="dv">10</span><span class="dt">L</span>), <span class="cf">function</span>(value) <span class="fu">Just</span>(<span class="at">value =</span> value))</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>maybe_functions <span class="ot">&lt;-</span> <span class="fu">gen_choice</span>(</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="fu">gen_constant</span>(<span class="fu">list</span>(<span class="at">op =</span> <span class="st">&quot;nothing&quot;</span>)),</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="fu">gen_map</span>(<span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">5</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>), <span class="cf">function</span>(amount) <span class="fu">list</span>(<span class="at">op =</span> <span class="st">&quot;add&quot;</span>, <span class="at">amount =</span> amount)),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="fu">gen_map</span>(<span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">5</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>), <span class="cf">function</span>(minimum) <span class="fu">list</span>(<span class="at">op =</span> <span class="st">&quot;at_least&quot;</span>, <span class="at">minimum =</span> minimum))</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>maybe_function <span class="ot">&lt;-</span> <span class="cf">function</span>(spec) {</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="fu">force</span>(spec)</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="cf">switch</span>(spec<span class="sc">$</span>op,</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>    <span class="at">nothing =</span> <span class="fu">Nothing</span>(),</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>    <span class="at">add =</span> <span class="fu">Just</span>(<span class="at">value =</span> x <span class="sc">+</span> spec<span class="sc">$</span>amount),</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>    <span class="at">at_least =</span> <span class="cf">if</span> (x <span class="sc">&gt;=</span> spec<span class="sc">$</span>minimum) <span class="fu">Just</span>(<span class="at">value =</span> x) <span class="cf">else</span> <span class="fu">Nothing</span>(),</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;Unknown Maybe function&quot;</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  )</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>}</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>maybe_equal <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">S7_inherits</span>(x, Nothing) <span class="sc">&amp;&amp;</span> <span class="fu">S7_inherits</span>(y, Nothing)) <span class="fu">return</span>(<span class="cn">TRUE</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">S7_inherits</span>(x, Just) <span class="sc">&amp;&amp;</span> <span class="fu">S7_inherits</span>(y, Just)) <span class="fu">return</span>(<span class="fu">identical</span>(x<span class="sc">@</span>value, y<span class="sc">@</span>value))</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>  <span class="cn">FALSE</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>}</span></code></pre></div>
+<p>Function descriptions remain data in counterexamples. Shrinking tries
+earlier constructors and function families, then moves integer
+parameters toward zero. The interpreter constructs each function
+independently of the dictionary under test. Equality compares the
+observable constructor and uses <code>identical()</code> for payloads,
+so integer and double payloads differ.</p>
+</div>
+<div id="three-laws-one-suite" class="section level2">
+<h2>Three laws, one suite</h2>
+<p>The <a href="https://www.haskell.org/onlinereport/haskell2010/haskellch6.html">Haskell
+2010 Report, §6.3.6</a> gives the three monad equations. Writing
+<code>pure</code> for the unit operation and <code>&gt;&gt;=</code> for
+bind:</p>
+<pre class="text"><code>pure(a) &gt;&gt;= f              = f(a)
+m &gt;&gt;= pure                 = m
+(m &gt;&gt;= f) &gt;&gt;= g            = m &gt;&gt;= (x -&gt; f(x) &gt;&gt;= g)</code></pre>
+<p><code>maybe_laws(dictionary)</code> returns three ordinary laws. Each
+equation uses the same interpreted functions on both sides. Coverage
+labels describe reference outcomes of those functions, including absence
+at the input or after either function in a composition.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>maybe_laws <span class="ot">&lt;-</span> <span class="cf">function</span>(dictionary) {</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">assert_implements</span>(dictionary, MonadDictionary)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">left_identity =</span> <span class="fu">new_law</span>(<span class="st">&quot;Maybe left identity&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">value =</span> <span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">10</span><span class="dt">L</span>, <span class="dv">10</span><span class="dt">L</span>), <span class="at">fn =</span> maybe_functions),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>      <span class="cf">function</span>(value, fn) {</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>        f <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(fn)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>        <span class="fu">maybe_equal</span>(<span class="fu">dict_bind</span>(dictionary, <span class="fu">dict_pure</span>(dictionary, value), f), <span class="fu">f</span>(value))</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>      },</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>      <span class="at">classify =</span> <span class="cf">function</span>(value, fn) {</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>        result <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(fn)(value)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>        <span class="fu">c</span>(fn<span class="sc">$</span>op, <span class="cf">if</span> (<span class="fu">S7_inherits</span>(result, Nothing)) <span class="st">&quot;Nothing&quot;</span> <span class="cf">else</span> <span class="st">&quot;Just&quot;</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>      },</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>      <span class="at">min_coverage =</span> <span class="fu">c</span>(<span class="at">nothing =</span> <span class="fl">0.1</span>, <span class="at">add =</span> <span class="fl">0.1</span>, <span class="at">at_least =</span> <span class="fl">0.1</span>, <span class="at">Nothing =</span> <span class="fl">0.2</span>, <span class="at">Just =</span> <span class="fl">0.2</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>    ),</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    <span class="at">right_identity =</span> <span class="fu">new_law</span>(<span class="st">&quot;Maybe right identity&quot;</span>, <span class="fu">list</span>(<span class="at">mx =</span> maybe_values),</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>      <span class="cf">function</span>(mx) {</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>        <span class="fu">maybe_equal</span>(<span class="fu">dict_bind</span>(dictionary, mx, <span class="cf">function</span>(x) <span class="fu">dict_pure</span>(dictionary, x)), mx)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>      },</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>      <span class="at">classify =</span> <span class="cf">function</span>(mx) <span class="cf">if</span> (<span class="fu">S7_inherits</span>(mx, Nothing)) <span class="st">&quot;Nothing&quot;</span> <span class="cf">else</span> <span class="st">&quot;Just&quot;</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>      <span class="at">min_coverage =</span> <span class="fu">c</span>(<span class="at">Nothing =</span> <span class="fl">0.2</span>, <span class="at">Just =</span> <span class="fl">0.2</span>)</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>    ),</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    <span class="at">associativity =</span> <span class="fu">new_law</span>(<span class="st">&quot;Maybe associativity&quot;</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>      <span class="fu">list</span>(<span class="at">mx =</span> maybe_values, <span class="at">first =</span> maybe_functions, <span class="at">second =</span> maybe_functions),</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>      <span class="cf">function</span>(mx, first, second) {</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>        f <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(first)</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>        g <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(second)</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>        <span class="fu">maybe_equal</span>(</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>          <span class="fu">dict_bind</span>(dictionary, <span class="fu">dict_bind</span>(dictionary, mx, f), g),</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>          <span class="fu">dict_bind</span>(dictionary, mx, <span class="cf">function</span>(x) <span class="fu">dict_bind</span>(dictionary, <span class="fu">f</span>(x), g))</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>        )</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>      },</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>      <span class="at">classify =</span> <span class="cf">function</span>(mx, first, second) {</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">S7_inherits</span>(mx, Nothing)) <span class="fu">return</span>(<span class="st">&quot;Nothing&quot;</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>        fx <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(first)(mx<span class="sc">@</span>value)</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">S7_inherits</span>(fx, Nothing)) <span class="fu">return</span>(<span class="fu">c</span>(<span class="st">&quot;Just&quot;</span>, <span class="st">&quot;first_Nothing&quot;</span>))</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>        gx <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(second)(fx<span class="sc">@</span>value)</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>        <span class="fu">c</span>(<span class="st">&quot;Just&quot;</span>, <span class="cf">if</span> (<span class="fu">S7_inherits</span>(gx, Nothing)) <span class="st">&quot;second_Nothing&quot;</span> <span class="cf">else</span> <span class="st">&quot;both_Just&quot;</span>)</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a>      },</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>      <span class="at">min_coverage =</span> <span class="fu">c</span>(<span class="at">Nothing =</span> <span class="fl">0.2</span>, <span class="at">Just =</span> <span class="fl">0.2</span>, <span class="at">first_Nothing =</span> <span class="fl">0.1</span>,</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>                       <span class="at">second_Nothing =</span> <span class="fl">0.05</span>, <span class="at">both_Just =</span> <span class="fl">0.05</span>)</span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>    )</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a>  )</span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>maybe_results <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">maybe_laws</span>(MaybeMonad), check_law, <span class="at">tests =</span> <span class="dv">200</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">vapply</span>(maybe_results, <span class="cf">function</span>(result) result<span class="sc">@</span>status, <span class="fu">character</span>(<span class="dv">1</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt;  left_identity right_identity  associativity </span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;       &quot;passed&quot;       &quot;passed&quot;       &quot;passed&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>maybe_results<span class="sc">$</span>associativity<span class="sc">@</span>coverage</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt;            label count proportion minimum  met</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; 1        Nothing   102      0.510    0.20 TRUE</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 2           Just    98      0.490    0.20 TRUE</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 3  first_Nothing    56      0.280    0.10 TRUE</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 4 second_Nothing    21      0.105    0.05 TRUE</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 5      both_Just    21      0.105    0.05 TRUE</span></span></code></pre></div>
+<p>These laws test the generated families of functions and integer
+payloads. <code>dict_bind()</code> calls the dictionary under test;
+<code>gen_bind()</code> composes generators and their shrink trees.</p>
+</div>
+<div id="a-default-that-breaks-the-laws" class="section level2">
+<h2>A default that breaks the laws</h2>
+<p>This dictionary replaces every <code>Nothing</code> result with
+<code>Just(0L)</code>. Its operations still satisfy the structural
+interface:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>DefaultingMaybe <span class="ot">&lt;-</span> <span class="fu">MonadDict</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;Defaulting Maybe&quot;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">pure =</span> MaybeMonad<span class="sc">@</span>pure,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">bind =</span> <span class="cf">function</span>(mx, f) {</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>    result <span class="ot">&lt;-</span> <span class="fu">dict_bind</span>(MaybeMonad, mx, f)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">S7_inherits</span>(result, Nothing)) <span class="fu">Just</span>(<span class="at">value =</span> <span class="dv">0</span><span class="dt">L</span>) <span class="cf">else</span> result</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  }</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="fu">implements</span>(DefaultingMaybe, MonadDictionary)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>defaulting_results <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">maybe_laws</span>(DefaultingMaybe), check_law, <span class="at">tests =</span> <span class="dv">200</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="fu">vapply</span>(defaulting_results, <span class="cf">function</span>(result) result<span class="sc">@</span>status, <span class="fu">character</span>(<span class="dv">1</span>))</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt;  left_identity right_identity  associativity </span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;    &quot;falsified&quot;    &quot;falsified&quot;    &quot;falsified&quot;</span></span></code></pre></div>
+<p>Associativity fails because the default allows a later function to
+run on one side of the equation. The reduced input keeps both function
+descriptions:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>maybe_failure <span class="ot">&lt;-</span> defaulting_results<span class="sc">$</span>associativity</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>maybe_failure</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; Law &#39;Maybe associativity&#39; was falsified after 5 attempts and 3 shrinks (seed 1).</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; The law returned FALSE.</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; Shrinking stopped: no child of this counterexample preserves the failure.</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; Smallest counterexample found:</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; List of 3</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;  $ mx    : &lt;Nothing&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt;  $ first :List of 1</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt;   ..$ op: chr &quot;nothing&quot;</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt;  $ second:List of 2</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt;   ..$ op    : chr &quot;add&quot;</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt;   ..$ amount: int -1</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; Case coverage (5 accepted cases; partial run):</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt;   &quot;second_Nothing&quot;: 0/5 (0%; minimum 5% unmet)</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt;   &quot;both_Just&quot;: 0/5 (0%; minimum 5% unmet)</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt;   &quot;Nothing&quot;: 3/5 (60%; minimum 20%)</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt;   &quot;Just&quot;: 2/5 (40%; minimum 20%)</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt;   &quot;first_Nothing&quot;: 2/5 (40%; minimum 10%)</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>example <span class="ot">&lt;-</span> maybe_failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(example<span class="sc">$</span>first)</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>g <span class="ot">&lt;-</span> <span class="fu">maybe_function</span>(example<span class="sc">$</span>second)</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="fu">dict_bind</span>(DefaultingMaybe, <span class="fu">dict_bind</span>(DefaultingMaybe, example<span class="sc">$</span>mx, f), g)</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; &lt;Just&gt;</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt;  @ value: int -1</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="fu">dict_bind</span>(DefaultingMaybe, example<span class="sc">$</span>mx, <span class="cf">function</span>(x) <span class="fu">dict_bind</span>(DefaultingMaybe, <span class="fu">f</span>(x), g))</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt; &lt;Just&gt;</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;  @ value: int 0</span></span></code></pre></div>
+<p>The same law and recorded parameters reproduce the failure:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>maybe_replayed <span class="ot">&lt;-</span> <span class="fu">do.call</span>(check_law, <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">law =</span> maybe_failure<span class="sc">@</span>law), maybe_failure<span class="sc">@</span>parameters))</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">identical</span>(maybe_replayed<span class="sc">@</span>counterexample<span class="sc">@</span>minimal, maybe_failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>The <a href="https://www.haskell.org/tutorial/monads.html">Haskell
+monad tutorial</a> develops the distinction between type-class
+operations and their laws.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

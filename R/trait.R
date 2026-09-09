@@ -1,17 +1,14 @@
 .s7contract_registry <- new.env(parent = emptyenv())
-.s7contract_registry$next_trait_id <- 0L
 .s7contract_registry$impls <- list()
-
-.next_trait_id <- function() {
-  .s7contract_registry$next_trait_id <- .s7contract_registry$next_trait_id + 1L
-  sprintf("trait:%d", .s7contract_registry$next_trait_id)
-}
 
 #' Build a Rust-like explicit trait on top of S7
 #'
 #' `new_trait()` adds a nominal contract registry on top of S7 dispatch. A class
 #' only has the trait after `impl_trait()` records the implementation, even if
-#' compatible S7 methods already exist.
+#' compatible S7 methods already exist. Registrations belong to the current
+#' R session and the particular trait descriptor, not its display name. Reuse
+#' the same descriptor for registration and checks; deserializing a descriptor
+#' does not transfer its registrations.
 #'
 #' This makes default methods and associated metadata practical, but the result
 #' remains a runtime R abstraction. It does not emulate Rust's compile-time
@@ -76,7 +73,7 @@ new_trait <- function(
   }
 
   s7_trait(
-    id = .next_trait_id(),
+    id = new.env(parent = emptyenv()),
     name = name,
     package = package,
     parents = .normalise_trait_parents(parents),
@@ -109,7 +106,7 @@ trait_method <- function(
     .abort("`default` must be NULL or a function.")
   }
   if (is.null(name)) {
-    name <- .generic_label(generic)
+    name <- generic@name
   }
   if (!is.character(name) || length(name) != 1 || !nzchar(name)) {
     .abort("`name` must be a non-empty string.")
@@ -122,19 +119,6 @@ trait_method <- function(
     args = .normalise_type_specs(args, "args"),
     returns = .normalise_return_spec(returns)
   )
-}
-
-.as_trait_method <- function(x, name = NULL) {
-  if (.is_trait_method(x)) {
-    if (!is.null(name)) {
-      x@name <- name
-    }
-    return(x)
-  }
-  if (is.function(x)) {
-    return(trait_method(x, name = name))
-  }
-  .abort("Trait methods must be S7 generics or trait_method() objects.")
 }
 
 .normalise_trait_methods <- function(methods) {
@@ -156,7 +140,12 @@ trait_method <- function(
   out <- vector("list", length(methods))
   for (i in seq_along(methods)) {
     nm <- if (nzchar(nms[[i]])) nms[[i]] else NULL
-    method <- .as_trait_method(methods[[i]], name = nm)
+    method <- methods[[i]]
+    if (.is_trait_method(method)) {
+      if (!is.null(nm)) method@name <- nm
+    } else {
+      method <- trait_method(method, name = nm)
+    }
     out[[i]] <- method
     nms[[i]] <- method@name
   }
@@ -271,7 +260,7 @@ trait_methods <- function(trait, inherited = TRUE) {
   impls <- .s7contract_registry$impls
   for (impl in impls) {
     if (
-      identical(impl@trait_id, trait@id) &&
+      identical(impl@trait@id, trait@id) &&
         .class_equal(impl@target_class, class)
     ) {
       return(impl)
@@ -280,22 +269,42 @@ trait_methods <- function(trait, inherited = TRUE) {
   NULL
 }
 
+.check_trait_impl_admissible <- function(trait, class, replace) {
+  for (parent in trait@parents) {
+    if (is.null(.find_trait_impl(parent, class))) {
+      .abort(
+        "Cannot implement %s for %s until its supertrait %s is implemented.",
+        .trait_label(trait),
+        .class_label(class),
+        .trait_label(parent)
+      )
+    }
+  }
+
+  if (!replace && !is.null(.find_trait_impl(trait, class))) {
+    .abort(
+      "%s is already implemented for %s. Pass replace = TRUE to replace it.",
+      .trait_label(trait),
+      .class_label(class)
+    )
+  }
+  invisible(NULL)
+}
+
 .store_trait_impl <- function(impl, replace = FALSE) {
+  .check_trait_impl_admissible(
+    impl@trait,
+    impl@target_class,
+    replace = replace
+  )
   impls <- .s7contract_registry$impls
   keep <- rep(TRUE, length(impls))
 
   for (i in seq_along(impls)) {
     if (
-      identical(impls[[i]]@trait_id, impl@trait_id) &&
+      identical(impls[[i]]@trait@id, impl@trait@id) &&
         .class_equal(impls[[i]]@target_class, impl@target_class)
     ) {
-      if (!replace) {
-        .abort(
-          "%s is already implemented for %s. Pass replace = TRUE to replace it.",
-          impl@trait_label,
-          .class_label(impl@target_class)
-        )
-      }
       keep[[i]] <- FALSE
     }
   }
@@ -362,7 +371,8 @@ trait_methods <- function(trait, inherited = TRUE) {
   out
 }
 
-#' @param class An S7 class or base class wrapper.
+#' @param class A concrete S7 class, S3 class wrapper, S4 class, or base class
+#'   wrapper. Register union members separately.
 #' @param methods Named list of method implementations. Omitted trait methods
 #'   use their default implementation when one is available.
 #' @param assoc_types Named list of associated type values.
@@ -386,28 +396,14 @@ impl_trait <- function(
   cls <- .as_class_or_null(class, arg = "class")
   if (is.null(cls)) {
     .abort(
-      "`class` must be an S7 class, S7 union, S3 class wrapper, S4 class, or base class wrapper."
+      "`class` must be an S7 class, S3 class wrapper, S4 class, or base class wrapper."
     )
   }
-
-  for (parent in trait@parents) {
-    if (is.null(.find_trait_impl(parent, cls))) {
-      .abort(
-        "Cannot implement %s for %s until its supertrait %s is implemented.",
-        .trait_label(trait),
-        .class_label(cls),
-        .trait_label(parent)
-      )
-    }
+  if (inherits(cls, "S7_union")) {
+    .abort("Trait implementations require a concrete class; register union members separately.")
   }
 
-  if (!replace && !is.null(.find_trait_impl(trait, cls))) {
-    .abort(
-      "%s is already implemented for %s. Pass replace = TRUE to replace it.",
-      .trait_label(trait),
-      .class_label(cls)
-    )
-  }
+  .check_trait_impl_admissible(trait, cls, replace = replace)
 
   trait_reqs <- trait_methods(trait, inherited = FALSE)
   provided_methods <- .normalise_impl_methods(methods)
@@ -435,20 +431,18 @@ impl_trait <- function(
   }
 
   resolved_assoc_types <- .resolve_assoc_impl(
-    .trait_assoc_types(trait, inherited = FALSE),
+    trait@assoc_types,
     assoc_types,
     "assoc_types"
   )
   resolved_assoc_consts <- .resolve_assoc_impl(
-    .trait_assoc_consts(trait, inherited = FALSE),
+    trait@assoc_consts,
     assoc_consts,
     "assoc_consts"
   )
 
   impl <- s7_trait_impl(
     trait = trait,
-    trait_id = trait@id,
-    trait_label = .trait_label(trait),
     target_class = cls,
     methods = resolved_methods,
     assoc_types = resolved_assoc_types,

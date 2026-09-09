@@ -487,9 +487,9 @@ consumer-owned protocol.</p>
 <span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">library_size</span>(mock)</span>
 <span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; sampleA sampleB </span></span>
 <span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;       3       7</span></span></code></pre></div>
-<p>This is the productive use case. A package can write against a small
-protocol, return an ordinary vector, and let separate adapters provide
-methods for concrete containers.</p>
+<p>A package can write against a small protocol, return an ordinary
+vector, and let separate adapters provide methods for concrete
+containers.</p>
 </div>
 <div id="when-an-explicit-trait-helps" class="section level2">
 <h2>When an explicit trait helps</h2>
@@ -539,20 +539,17 @@ biological correctness. Method availability does not prove that samples
 are comparable, that row ranges use the same genome build, or that an
 assay transform is appropriate for a downstream model. Those checks
 should remain explicit and domain-specific.</p>
-<p>The narrow conclusion is useful enough: interfaces can mimic a small
-behavioral slice of a class such as <code>SummarizedExperiment</code>,
-but they should not replace the class or its ecosystem.</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
 <ul>
 <li>The Bioconductor <code>SummarizedExperiment</code> package: <a href="https://bioconductor.org/packages/SummarizedExperiment/" class="uri">https://bioconductor.org/packages/SummarizedExperiment/</a>.</li>
-<li>Morgan et al. (2023), “Orchestrating high-throughput genomic
-analysis with Bioconductor”: <a href="https://bioconductor.org/help/publications/" class="uri">https://bioconductor.org/help/publications/</a>.</li>
+<li>Huber et al. (2015), <a href="https://www.nature.com/articles/nmeth.3252">“Orchestrating
+high-throughput genomic analysis with Bioconductor”</a>.</li>
 <li>The S7 package documentation: <a href="https://rconsortium.github.io/S7/" class="uri">https://rconsortium.github.io/S7/</a>.</li>
 <li>Chewxy, “How To Use Go Interfaces”: <a href="https://blog.chewxy.com/2018/03/18/golang-interfaces/" class="uri">https://blog.chewxy.com/2018/03/18/golang-interfaces/</a>.</li>
-<li>The <code>s7contract</code> interface and trait vignette in this
-package.</li>
+<li><a href="s7-interfaces-and-traits.html">Behavioral Contracts on
+S7</a>.</li>
 </ul>
 </div>
 

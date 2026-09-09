@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Testing Stateful S7 Protocols</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Testing Stateful S7 Protocols</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span></code></pre></div>
+<p>A mutable store must behave correctly across calls: a put changes a
+later get, a delete removes a key, and a reset clears earlier entries.
+We can test these relationships by generating sequential commands and
+comparing each operation with a reference model.</p>
+<div id="the-protocol-and-its-implementations" class="section level2">
+<h2>The protocol and its implementations</h2>
+<p>This protocol stores one integer per string key and reports keys in
+sorted order. The example uses bounded strings and small integer values.
+Missing keys return <code>NULL</code>; generated get and delete commands
+use existing keys.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>store_put <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;store_put&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="cf">function</span>(x, key, value) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>store_get <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;store_get&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="cf">function</span>(x, key) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>store_delete <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;store_delete&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="cf">function</span>(x, key) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>store_reset <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;store_reset&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>store_keys <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;store_keys&quot;</span>, <span class="st">&quot;x&quot;</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>KeyValue <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(<span class="st">&quot;KeyValue&quot;</span>, <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">put =</span> <span class="fu">interface_requirement</span>(store_put,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    <span class="at">args =</span> <span class="fu">list</span>(<span class="at">key =</span> class_character, <span class="at">value =</span> class_integer)),</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">get =</span> <span class="fu">interface_requirement</span>(store_get, <span class="at">args =</span> <span class="fu">list</span>(<span class="at">key =</span> class_character)),</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">delete =</span> <span class="fu">interface_requirement</span>(store_delete, <span class="at">args =</span> <span class="fu">list</span>(<span class="at">key =</span> class_character)),</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="at">reset =</span> store_reset,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="at">keys =</span> <span class="fu">interface_requirement</span>(store_keys, <span class="at">returns =</span> class_character)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>))</span></code></pre></div>
+<p>One implementation stores environment bindings; the other updates a
+list held in an environment. Both use ordinary S7 methods.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>EnvStore <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;EnvStore&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">data =</span> class_environment))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">method</span>(store_put, EnvStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key, value) {</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">assign</span>(key, value, <span class="at">envir =</span> x<span class="sc">@</span>data)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>}</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">method</span>(store_get, EnvStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key) {</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">exists</span>(key, <span class="at">envir =</span> x<span class="sc">@</span>data, <span class="at">inherits =</span> <span class="cn">FALSE</span>)) <span class="fu">get</span>(key, <span class="at">envir =</span> x<span class="sc">@</span>data)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>}</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">method</span>(store_delete, EnvStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key) {</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">exists</span>(key, <span class="at">envir =</span> x<span class="sc">@</span>data, <span class="at">inherits =</span> <span class="cn">FALSE</span>)) <span class="fu">rm</span>(<span class="at">list =</span> key, <span class="at">envir =</span> x<span class="sc">@</span>data)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>}</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">method</span>(store_reset, EnvStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>(x<span class="sc">@</span>data, <span class="at">all.names =</span> <span class="cn">TRUE</span>), <span class="at">envir =</span> x<span class="sc">@</span>data)</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>}</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="fu">method</span>(store_keys, EnvStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sort</span>(<span class="fu">ls</span>(x<span class="sc">@</span>data, <span class="at">all.names =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>ListStore <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;ListStore&quot;</span>, <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">data =</span> class_environment))</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="fu">method</span>(store_put, ListStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key, value) {</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  x<span class="sc">@</span>data<span class="sc">$</span>values[key] <span class="ot">&lt;-</span> <span class="fu">list</span>(value)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>}</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="fu">method</span>(store_get, ListStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key) x<span class="sc">@</span>data<span class="sc">$</span>values[[key]]</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="fu">method</span>(store_delete, ListStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key) {</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>  x<span class="sc">@</span>data<span class="sc">$</span>values[key] <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>}</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="fu">method</span>(store_reset, ListStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>  x<span class="sc">@</span>data<span class="sc">$</span>values <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>}</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="fu">method</span>(store_keys, ListStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sort</span>(<span class="fu">as.character</span>(<span class="fu">names</span>(x<span class="sc">@</span>data<span class="sc">$</span>values)))</span></code></pre></div>
+</div>
+<div id="commands-and-a-reference-model" class="section level2">
+<h2>Commands and a reference model</h2>
+<p>Keys contain one to four code points from <code>a</code>,
+<code>b</code>, <code>c</code>, and <code>\u00e9</code> (é). This recipe
+converts the alphabet to UTF-8, rejects missing and byte strings, and
+counts code points rather than bytes or grapheme clusters. The alphabet
+must be nonempty; each entry must contain exactly one code point. With
+<code>min = 0</code>, the recipe also generates <code>&quot;&quot;</code>, which
+environment bindings cannot use as a key. Shrinking removes chunks
+before moving characters toward earlier alphabet entries.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>string_generator <span class="ot">&lt;-</span> <span class="cf">function</span>(alphabet, <span class="at">min =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">max =</span> <span class="dv">4</span><span class="dt">L</span>) {</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.character</span>(alphabet) <span class="sc">||</span> <span class="fu">anyNA</span>(alphabet)) {</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;alphabet must contain non-missing characters&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  }</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">Encoding</span>(alphabet) <span class="sc">==</span> <span class="st">&quot;bytes&quot;</span>)) <span class="fu">stop</span>(<span class="st">&quot;byte strings are not supported&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  alphabet <span class="ot">&lt;-</span> <span class="fu">enc2utf8</span>(alphabet)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span><span class="fu">validUTF8</span>(alphabet))) <span class="fu">stop</span>(<span class="st">&quot;alphabet must be valid UTF-8&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">nchar</span>(alphabet, <span class="at">type =</span> <span class="st">&quot;chars&quot;</span>) <span class="sc">!=</span> <span class="dv">1</span><span class="dt">L</span>)) {</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;each alphabet entry must be one Unicode code point&quot;</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  }</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="fu">gen_map</span>(<span class="fu">gen_vector</span>(<span class="fu">gen_element</span>(alphabet), min, max),</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>          <span class="cf">function</span>(parts) <span class="fu">paste0</span>(parts, <span class="at">collapse =</span> <span class="st">&quot;&quot;</span>), <span class="at">prototype =</span> <span class="fu">character</span>())</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>}</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>store_keys_generator <span class="ot">&lt;-</span> <span class="fu">string_generator</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;\u00e9&quot;</span>), <span class="at">min =</span> <span class="dv">1</span><span class="dt">L</span>)</span></code></pre></div>
+<p><a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/paste.html"><code>paste()</code></a>
+preserves UTF-8 here and collapses zero entries to one empty string.
+Missing values are rejected before concatenation because
+<code>paste()</code> would turn them into the literal text
+<code>&quot;NA&quot;</code>.</p>
+<p>The model is a named list of expected values. Each command defines
+its input generator, implementation call, and postcondition. A model
+update derives the next state from the input. <code>get</code> and
+<code>delete</code> are available only when a key exists; their
+preconditions also apply during shrinking.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>existing_key <span class="ot">&lt;-</span> <span class="cf">function</span>(state) {</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(state) <span class="sc">==</span> <span class="dv">0</span><span class="dt">L</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">gen_element</span>(<span class="fu">names</span>(state))</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>}</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>store_commands <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="fu">new_command</span>(<span class="st">&quot;put&quot;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="at">generate =</span> <span class="cf">function</span>(state) <span class="fu">gen_product</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>      <span class="at">key =</span> store_keys_generator, <span class="at">value =</span> <span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">10</span><span class="dt">L</span>, <span class="dv">10</span><span class="dt">L</span>)),</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="at">execute =</span> <span class="cf">function</span>(fixture, input) <span class="fu">with</span>(KeyValue, {</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>      <span class="fu">store_put</span>(fixture, input<span class="sc">$</span>key, input<span class="sc">$</span>value)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>      <span class="fu">store_get</span>(fixture, input<span class="sc">$</span>key)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    }),</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    <span class="at">update =</span> <span class="cf">function</span>(state, input, output) {</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>      state[input<span class="sc">$</span>key] <span class="ot">&lt;-</span> <span class="fu">list</span>(input<span class="sc">$</span>value)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>      state</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>    },</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>    <span class="at">ensure =</span> <span class="cf">function</span>(state, input, output) <span class="fu">identical</span>(output, input<span class="sc">$</span>value)</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  ),</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  <span class="fu">new_command</span>(<span class="st">&quot;get&quot;</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>    <span class="at">generate =</span> existing_key,</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>    <span class="at">require =</span> <span class="cf">function</span>(state, input) input <span class="sc">%in%</span> <span class="fu">names</span>(state),</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>    <span class="at">execute =</span> <span class="cf">function</span>(fixture, input) <span class="fu">with</span>(KeyValue, <span class="fu">store_get</span>(fixture, input)),</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>    <span class="at">ensure =</span> <span class="cf">function</span>(state, input, output) <span class="fu">identical</span>(output, state[[input]])</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  ),</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>  <span class="fu">new_command</span>(<span class="st">&quot;delete&quot;</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>    <span class="at">generate =</span> existing_key,</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>    <span class="at">require =</span> <span class="cf">function</span>(state, input) input <span class="sc">%in%</span> <span class="fu">names</span>(state),</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a>    <span class="at">execute =</span> <span class="cf">function</span>(fixture, input) <span class="fu">with</span>(KeyValue, {</span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a>      <span class="fu">store_delete</span>(fixture, input)</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a>      <span class="fu">store_keys</span>(fixture)</span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>    }),</span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a>    <span class="at">update =</span> <span class="cf">function</span>(state, input, output) {</span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a>      state[input] <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a>      state</span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a>    },</span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a>    <span class="at">ensure =</span> <span class="cf">function</span>(state, input, output) {</span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a>      <span class="fu">identical</span>(output, <span class="fu">sort</span>(<span class="fu">setdiff</span>(<span class="fu">names</span>(state), input)))</span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a>    }</span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a>  ),</span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a>  <span class="fu">new_command</span>(<span class="st">&quot;reset&quot;</span>,</span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a>    <span class="at">generate =</span> <span class="cf">function</span>(state) <span class="fu">gen_constant</span>(<span class="cn">NULL</span>),</span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a>    <span class="at">execute =</span> <span class="cf">function</span>(fixture, input) <span class="fu">with</span>(KeyValue, {</span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a>      <span class="fu">store_reset</span>(fixture)</span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a>      <span class="fu">store_keys</span>(fixture)</span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a>    }),</span>
+<span id="cb5-46"><a href="#cb5-46" tabindex="-1"></a>    <span class="at">update =</span> <span class="cf">function</span>(state, input, output) <span class="fu">list</span>(),</span>
+<span id="cb5-47"><a href="#cb5-47" tabindex="-1"></a>    <span class="at">ensure =</span> <span class="cf">function</span>(state, input, output) <span class="fu">identical</span>(output, <span class="fu">character</span>())</span>
+<span id="cb5-48"><a href="#cb5-48" tabindex="-1"></a>  )</span>
+<span id="cb5-49"><a href="#cb5-49" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>ensure(state, input, output)</code> sees the model before the
+command and returns a scalar logical. It runs after
+<code>update()</code> has computed the next model. The model’s expected
+values come from the inputs, independently of the store’s answers.</p>
+</div>
+<div id="one-law-two-fixtures" class="section level2">
+<h2>One law, two fixtures</h2>
+<p><code>new_state_law()</code> gives every case and evaluated shrink a
+fresh fixture. Teardown runs once after each successful setup, including
+after a false postcondition, warning, or error.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>store_law <span class="ot">&lt;-</span> <span class="cf">function</span>(make) {</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">new_state_law</span>(<span class="st">&quot;key/value operations follow the model&quot;</span>, <span class="fu">list</span>(), store_commands,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">setup =</span> <span class="cf">function</span>() {</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>      fixture <span class="ot">&lt;-</span> <span class="fu">make</span>()</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>      <span class="fu">assert_implements</span>(fixture, KeyValue)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>      fixture</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    },</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>    <span class="at">teardown =</span> <span class="cf">function</span>(fixture) {</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>      <span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>(fixture<span class="sc">@</span>data, <span class="at">all.names =</span> <span class="cn">TRUE</span>), <span class="at">envir =</span> fixture<span class="sc">@</span>data)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    },</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    <span class="at">max_commands =</span> <span class="dv">12</span><span class="dt">L</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    <span class="at">classify =</span> <span class="cf">function</span>(sequence) {</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>      puts <span class="ot">&lt;-</span> <span class="fu">Filter</span>(<span class="cf">function</span>(step) step<span class="sc">$</span>command <span class="sc">==</span> <span class="st">&quot;put&quot;</span>, sequence)</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>      keys <span class="ot">&lt;-</span> <span class="fu">vapply</span>(puts, <span class="cf">function</span>(step) step<span class="sc">$</span>input<span class="sc">$</span>key, <span class="fu">character</span>(<span class="dv">1</span>))</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>      <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">nchar</span>(keys, <span class="at">type =</span> <span class="st">&quot;chars&quot;</span>) <span class="sc">&gt;</span> <span class="dv">1</span><span class="dt">L</span>)) <span class="st">&quot;multi_character&quot;</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">grepl</span>(<span class="st">&quot;\u00e9&quot;</span>, keys, <span class="at">fixed =</span> <span class="cn">TRUE</span>))) <span class="st">&quot;non_ascii&quot;</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    },</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    <span class="at">min_coverage =</span> <span class="fu">c</span>(<span class="at">multi_character =</span> <span class="fl">0.3</span>, <span class="at">non_ascii =</span> <span class="fl">0.2</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>  )</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>}</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>stores <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  <span class="at">environment =</span> <span class="cf">function</span>() <span class="fu">EnvStore</span>(<span class="at">data =</span> <span class="fu">new.env</span>(<span class="at">parent =</span> <span class="fu">emptyenv</span>())),</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>  <span class="at">list =</span> <span class="cf">function</span>() <span class="fu">ListStore</span>(<span class="at">data =</span> <span class="fu">list2env</span>(<span class="fu">list</span>(<span class="at">values =</span> <span class="fu">list</span>()), <span class="at">parent =</span> <span class="fu">emptyenv</span>()))</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>)</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>store_results <span class="ot">&lt;-</span> <span class="fu">lapply</span>(stores, <span class="cf">function</span>(make) <span class="fu">check_law</span>(<span class="fu">store_law</span>(make), <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>))</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="fu">vapply</span>(store_results, <span class="cf">function</span>(result) result<span class="sc">@</span>status, <span class="fu">character</span>(<span class="dv">1</span>))</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a><span class="co">#&gt; environment        list </span></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a><span class="co">#&gt;    &quot;passed&quot;    &quot;passed&quot;</span></span></code></pre></div>
+<p>Sequence length grows with the runner’s size, up to
+<code>max_commands</code>. Generation may stop sooner when no command is
+available. Empty sequences are allowed. <code>expect_law()</code> can
+run the same law as one tinytest expectation.</p>
+<p>The classifier records sequences containing multi-character and
+non-ASCII put keys. It counts generated inputs, including any suffix
+after an execution failure.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>store_results<span class="sc">$</span>environment<span class="sc">@</span>coverage</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt;             label count proportion minimum  met</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; 1 multi_character    78       0.78     0.3 TRUE</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; 2       non_ascii    69       0.69     0.2 TRUE</span></span></code></pre></div>
+</div>
+<div id="a-put-that-truncates-keys" class="section level2">
+<h2>A put that truncates keys</h2>
+<p>This implementation keeps only the first character when writing a
+key. The law reduces its failure to <code>put(&quot;aa&quot;, 0L)</code>: a
+subsequent get of <code>&quot;aa&quot;</code> returns <code>NULL</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>TruncatedStore <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;TruncatedStore&quot;</span>, <span class="at">parent =</span> EnvStore)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">method</span>(store_put, TruncatedStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, key, value) {</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">assign</span>(<span class="fu">substr</span>(key, <span class="dv">1</span><span class="dt">L</span>, <span class="dv">1</span><span class="dt">L</span>), value, <span class="at">envir =</span> x<span class="sc">@</span>data)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>}</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>truncated_failure <span class="ot">&lt;-</span> <span class="fu">check_law</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="fu">store_law</span>(<span class="cf">function</span>() <span class="fu">TruncatedStore</span>(<span class="at">data =</span> <span class="fu">new.env</span>(<span class="at">parent =</span> <span class="fu">emptyenv</span>()))),</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">shrinks =</span> <span class="dv">200</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>truncated_failure</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; Law &#39;key/value operations follow the model&#39; was falsified after 3 attempts and 3 shrinks (seed 1).</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Step 1 &#39;put&#39; (ensure): postcondition returned FALSE</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; List of 3</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;  $ model : list()</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt;  $ input :List of 2</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt;   ..$ key  : chr &quot;aa&quot;</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt;   ..$ value: int 0</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt;  $ output: NULL</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; Shrinking stopped: no child of this counterexample preserves the failure.</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; Smallest counterexample found:</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; List of 1</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt;  $ sequence:List of 1</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt;   ..$ :List of 3</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt;   .. ..$ id     : int 1</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt;   .. ..$ command: chr &quot;put&quot;</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt;   .. ..$ input  :List of 2</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; Case coverage (3 accepted cases; partial run):</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt;   &quot;non_ascii&quot;: 0/3 (0%; minimum 20% unmet)</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt;   &quot;multi_character&quot;: 1/3 (33.3%; minimum 30%)</span></span></code></pre></div>
+</div>
+<div id="a-reset-that-leaves-data-behind" class="section level2">
+<h2>A reset that leaves data behind</h2>
+<p>This subclass has every required method, but reset does nothing:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>StickyStore <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;StickyStore&quot;</span>, <span class="at">parent =</span> EnvStore)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">method</span>(store_reset, StickyStore) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">invisible</span>(<span class="cn">NULL</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">implements</span>(StickyStore, KeyValue)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>store_failure <span class="ot">&lt;-</span> <span class="fu">check_law</span>(</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="fu">store_law</span>(<span class="cf">function</span>() <span class="fu">StickyStore</span>(<span class="at">data =</span> <span class="fu">new.env</span>(<span class="at">parent =</span> <span class="fu">emptyenv</span>()))),</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">shrinks =</span> <span class="dv">200</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>store_failure</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; Law &#39;key/value operations follow the model&#39; was falsified after 6 attempts and 5 shrinks (seed 1).</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; Step 2 &#39;reset&#39; (ensure): postcondition returned FALSE</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; List of 3</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt;  $ model :List of 1</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt;   ..$ a: int 0</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt;  $ input : NULL</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt;  $ output: chr &quot;a&quot;</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt; Shrinking stopped: no child of this counterexample preserves the failure.</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; Smallest counterexample found:</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt; List of 1</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt;  $ sequence:List of 2</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt;   ..$ :List of 3</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt;   .. ..$ id     : int 2</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt;   .. ..$ command: chr &quot;put&quot;</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt;   .. ..$ input  :List of 2</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt;   ..$ :List of 3</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt;   .. ..$ id     : int 3</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;   .. ..$ command: chr &quot;reset&quot;</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt;   .. ..$ input  : NULL</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; Case coverage (6 accepted cases; partial run):</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="co">#&gt;   &quot;non_ascii&quot;: 1/6 (16.7%; minimum 20% unmet)</span></span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt;   &quot;multi_character&quot;: 2/6 (33.3%; minimum 30%)</span></span></code></pre></div>
+<p>The runner reduces the failure to a put followed by a reset. It first
+removes chunks of commands, then shrinks their inputs. After each
+change, it removes commands whose preconditions no longer hold, along
+with their dependents. The search retains failures of the same command’s
+postcondition; the result is minimal relative to the shrink tree and
+evaluation budget.</p>
+<p>The failure condition retains the resolved inputs, outputs, and model
+states:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>store_failure<span class="sc">@</span>counterexample<span class="sc">@</span>condition<span class="sc">$</span>trace</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; [[1]]$id</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; [[1]]$command</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;put&quot;</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; [[1]]$input</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; [[1]]$input$key</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; [1] &quot;a&quot;</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; [[1]]$input$value</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; [[1]]$output</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt; [[1]]$before</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; list()</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt; [[1]]$after</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; [[1]]$after$a</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; [[2]]$id</span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt; [1] 3</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="co">#&gt; [[2]]$command</span></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="co">#&gt; [1] &quot;reset&quot;</span></span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="co">#&gt; [[2]]$input</span></span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="co">#&gt; NULL</span></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="co">#&gt; [[2]]$output</span></span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="co">#&gt; [1] &quot;a&quot;</span></span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a><span class="co">#&gt; [[2]]$before</span></span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a><span class="co">#&gt; [[2]]$before$a</span></span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a><span class="co">#&gt; [[2]]$after</span></span>
+<span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a><span class="co">#&gt; list()</span></span></code></pre></div>
+<p>The original trace is in
+<code>store_failure@counterexample@original_condition$trace</code>.
+Unexpected callback errors stop shrinking and preserve an established
+counterexample. If teardown also fails, its condition is retained
+separately as <code>cleanup_condition</code>.
+<code>shrink_condition</code> reports why the search stopped.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>store_replayed <span class="ot">&lt;-</span> <span class="fu">do.call</span>(check_law, <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">law =</span> store_failure<span class="sc">@</span>law), store_failure<span class="sc">@</span>parameters))</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">identical</span>(store_replayed<span class="sc">@</span>counterexample<span class="sc">@</span>minimal, store_failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Replay requires unchanged commands, generators, run parameters, and
+compatible R/package versions. Setup must reproduce the initial state;
+shared mutable state outside the fixture would break that guarantee. The
+runner restores the caller’s RNG state as described in <a href="property-laws.html">Generative Laws with tinytest</a>.</p>
+</div>
+<div id="commands-that-return-handles" class="section level2">
+<h2>Commands that return handles</h2>
+<p>Some protocols allocate a handle that later commands consume. During
+generation, <code>update(state, input, output)</code> receives an opaque
+reference to the future output. It can append that reference to a list
+of live handles, and later generators can select one with
+<code>gen_element()</code>. During execution, the same update receives
+the actual handle.</p>
+<p>References resolve when passed directly as command inputs or nested
+in ordinary lists. They retain the producer’s ID when earlier commands
+are removed. Removing a producer also removes consumers of its output.
+References inside classed containers are not traversed; place them in a
+plain list before execution. The update must work with both symbolic and
+concrete outputs, without inspecting their representation. Models need
+value semantics; traces containing mutable handles retain R’s reference
+semantics.</p>
+<p>The design follows <a href="https://github.com/hedgehogqa/r-hedgehog/blob/master/vignettes/state-machines.Rmd">R
+Hedgehog’s state-machine example</a> and <a href="https://github.com/hedgehogqa/haskell-hedgehog/blob/master/hedgehog/src/Hedgehog/Internal/State.hs">Haskell
+Hedgehog’s commands</a>. For the model-based testing background, see <a href="https://research.chalmers.se/publication/232550">Hughes
+(2016)</a>. This runner executes sequential commands; it does not test
+concurrent histories.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

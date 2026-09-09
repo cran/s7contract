@@ -1,0 +1,253 @@
+---
+title: "Generative Laws with tinytest"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Generative Laws with tinytest}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(S7)
+library(s7contract)
+tinytest::using(s7contract)
+```
+
+Generative laws separate three concerns: generators construct examples, laws
+state behavior over those examples, and a runner searches for a smaller
+counterexample. One call to `expect_law()` becomes one tinytest result even
+though the law is evaluated many times.
+
+In `s7contract`, these laws provide behavioral evidence for protocols whose
+operations are described by interfaces or traits. The
+[vector protocol](protocol-laws.html) vignette defines one
+`VectorLike` law suite, runs it against two implementations, and finds a faulty
+slice method that satisfies the interface.
+
+## A tinytest property
+
+The generator below produces integer vectors and carries an integrated shrink
+tree. The law checks that reversing a vector twice returns the original value.
+
+```{r reverse-law}
+reverse_law <- new_law(
+  "reverse is involutive",
+  generators = list(
+    x = gen_vector(gen_integer(-100L, 100L), max = 20L)
+  ),
+  holds = function(x) identical(rev(rev(x)), x)
+)
+
+expect_law(reverse_law, tests = 100L, seed = 20260902L)
+```
+
+## Laws over an S7 interface
+
+Generate non-negative radii to construct valid `Circle` objects. The law checks
+their areas through an interface that requires a double return value.
+
+```{r interface-law}
+Circle <- new_class(
+  "CirclePropertyVignette",
+  properties = list(radius = class_double),
+  validator = function(self) {
+    if (self@radius < 0) "`radius` must be non-negative."
+  }
+)
+area <- new_generic(
+  "area_property_vignette",
+  "x",
+  function(x) S7_dispatch()
+)
+method(area, Circle) <- function(x) pi * x@radius^2
+
+HasArea <- new_interface(
+  "HasAreaPropertyVignette",
+  generics = list(
+    area = interface_requirement(area, returns = class_double)
+  )
+)
+circles <- gen_map(
+  gen_double(0, 1000),
+  function(radius) Circle(radius = radius)
+)
+area_law <- new_law(
+  "non-negative radii have non-negative area",
+  generators = list(x = circles),
+  holds = function(x) with(HasArea, area(x)) >= 0
+)
+
+expect_law(area_law, tests = 100L, seed = 20260902L)
+```
+
+## Inspecting and replaying a failure
+
+Use `check_law()` when the structured result is needed independently of a test
+framework. This deliberately false law starts at ten and shrinks to zero.
+
+```{r counterexample}
+ten <- new_generator(
+  draw = function(size) 10L,
+  shrink = function(value) {
+    if (value == 0L) list() else list(0L, value %/% 2L)
+  },
+  label = "ten",
+  prototype = integer()
+)
+negative_law <- new_law(
+  "generated values are negative",
+  generators = list(x = ten),
+  holds = function(x) x < 0L
+)
+
+failure <- check_law(negative_law, tests = 10L, seed = 20260902L)
+failure
+```
+
+The result records the seed, RNG kind, run parameters, original input, final
+counterexample, and shrink counts. The `minimal` field holds the last accepted
+failing candidate along the ordered shrink path, not a guaranteed smallest
+failure. `shrink_status` distinguishes exhaustion of the current candidate's
+children, an evaluation budget, a shrinking error, and a run that needed no
+shrinking. If shrinking
+errors or warns, `shrink_condition` records that problem while the original and
+last failing examples remain available.
+
+Replay the same law and parameters with ordinary R function application:
+
+```{r replay}
+replayed <- do.call(check_law, c(list(law = failure@law), failure@parameters))
+identical(replayed@counterexample@minimal, failure@counterexample@minimal)
+```
+
+Runs use Mersenne-Twister, Inversion normals, and Rejection sampling, so changing
+the caller's RNG kind does not change the generated sequence. Replay requires
+unchanged generator and law code, run parameters, and compatible R/package
+versions. Generators and laws must not depend on external mutable state or
+change the RNG configuration. Stored examples can still be tested directly when
+the generator changes.
+
+The caller's RNG kind and state are restored on exit. Box-Muller normals are
+unsupported because R does not expose their cached draw for restoration; select
+another normal RNG kind before running laws.
+
+## Composition and shrinking
+
+Mapping transforms both the generated value and visited shrinks. Products
+combine independent generators and shrink one component at a time. Vectors
+remove contiguous chunks and then shrink elements, retaining their minimum
+length. Nesting vector generators produces lists of vectors, including empty
+inner vectors:
+
+```{r nested-vectors}
+nested <- new_law(
+  "nested vectors retain their element type",
+  generators = list(x = gen_vector(gen_vector(gen_integer(), max = 4L), max = 3L)),
+  holds = function(x) is.list(x) && all(vapply(x, is.integer, logical(1)))
+)
+expect_law(nested, tests = 20L, seed = 1L)
+```
+
+The runner constructs and transforms each shrink candidate only when visited.
+`shrinks = 0L` performs no shrink expansion. A custom `shrink` function still
+constructs its own list of candidates; the evaluation budget cannot bound the
+work performed inside user functions. Shrinkers and mapping functions must be
+deterministic, and mapped constructors must accept every visited shrink.
+
+## Dependent inputs
+
+`gen_bind()` uses one generated value to construct the next generator. Here the
+sequence length and its bases belong to one dependent input. Every shrink still
+has exactly the declared length, so the law needs no discarded preconditions.
+
+```{r dependent-sequences}
+sequences <- gen_bind(gen_integer(0L, 20L), function(n) {
+  gen_product(
+    length = gen_constant(n),
+    bases = gen_vector(gen_element(c("A", "C", "G", "T")), min = n, max = n)
+  )
+})
+sequence_law <- new_law(
+  "sequence length matches its declaration",
+  generators = list(x = sequences),
+  holds = function(x) length(x$bases) == x$length
+)
+expect_law(sequence_law, tests = 40L, seed = 1L)
+gen_example(sequences, size = 10L, seed = 42L)
+```
+
+Shrinking first tries smaller source values and rebuilds the dependent
+generator, then shrinks its result. Each rebuild uses the same captured local
+seed and size. Random draws inside the law therefore do not change the
+regenerated candidates. The factory must depend only on its input and the
+scoped RNG, and its constructors must accept every visited source shrink.
+
+## Choices and recursive values
+
+`gen_element()` chooses a value; `gen_choice()` chooses a generator. Entries are
+ordered from simpler to more complex for shrinking. Optional `prob` weights
+control sampling; zero-weight entries are excluded from generation and
+shrinking. All entries with positive weight are available even at size zero.
+
+```{r nullable-values}
+nullable <- gen_choice(gen_constant(NA_integer_), gen_integer(), prob = c(1, 9))
+gen_example(gen_vector(nullable, min = 6L, max = 6L), size = 10L, seed = 42L)
+```
+
+`gen_sized()` builds a generator from the runner's current size. `gen_resize()`
+overrides the size for one generator while leaving sibling generators alone.
+`gen_recursive()` supplies its expansion function with a child generator that
+uses half the current size, rounded down. At size zero, only the base generator
+runs. This supports nested lists, expression trees, or recursive S7 objects.
+
+```{r recursive-values}
+trees <- gen_recursive(
+  gen_element(c("A", "C", "G", "T")),
+  function(child) gen_product(left = child, right = child)
+)
+gen_example(trees, size = 7L, seed = 42L)
+
+leaf_count <- function(tree) {
+  if (is.list(tree)) leaf_count(tree$left) + leaf_count(tree$right) else 1L
+}
+tree_law <- new_law(
+  "binary trees have at least one leaf",
+  generators = list(tree = trees),
+  holds = function(tree) leaf_count(tree) >= 1L
+)
+expect_law(tree_law, tests = 30L, seed = 1L, max_size = 7L)
+```
+
+Recursive size bounds depth, not total node count; the expansion function still
+controls branching. Shrinking can replace a recursive value with a base value
+before shrinking within a branch. `gen_no_shrink()` removes a generator's
+shrinking when a value must remain fixed during the search. `gen_example()`
+draws one value without expanding shrinks and restores the caller's RNG state.
+
+## Relationship to Hedgehog
+
+Generation and shrinking follow
+[R Hedgehog](https://hedgehogqa.r-universe.dev/hedgehog) and
+[Haskell Hedgehog](https://hackage.haskell.org/package/hedgehog): generators
+carry lazy rose trees, preserving shrinking through composition. The
+corresponding operations in `s7contract` are:
+
+| Concept | s7contract |
+|:--|:--|
+| Mapping / functor composition | `gen_map()` transforms values and their shrink trees. |
+| Independent / applicative composition | `gen_product()` and named law arguments combine independent generators. |
+| Dependent / monadic composition | `gen_bind()` rebuilds downstream generators when upstream inputs shrink. |
+| Size-aware generation | Integer ranges and vector lengths grow with size; `gen_sized()` and `gen_resize()` expose size control. |
+| Choice and recursive generation | `gen_element()`, `gen_choice()`, and `gen_recursive()` retain integrated shrinking. |
+| Inspection and shrink control | `gen_example()` draws a reproducible value; `gen_no_shrink()` removes shrinking. |
+| State-machine testing | `new_command()`, `gen_commands()`, and `new_state_law()` test sequential protocols against a model. |
+| Case coverage | `classify` labels generated inputs; `min_coverage` requires observed proportions within the test budget. See the [vector example](protocol-laws.html#which-cases-were-tested). |
+| Numeric domains | `gen_double()` generates finite fractional values with a shrink origin; `gen_choice()` adds exceptional values with explicit weights. |
+| Selection domains | `gen_sample()` preserves sample cardinality and distinct source positions; `gen_subsequence()` preserves source order. See the [vector laws](protocol-laws.html). |
+| Strings and calendar dates | Composed recipes exercise [UTF-8 store keys](stateful-protocols.html) and [whole-day intervals](calendar-intervals.html). |
+| Behavioral contracts | Laws can exercise S7 interfaces and traits through ordinary calls. |
+| Test-framework integration | `check_law()` returns structured results; `expect_law()` records one tinytest result. |

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Generative Laws with tinytest</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Generative Laws with tinytest</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>tinytest<span class="sc">::</span><span class="fu">using</span>(s7contract)</span></code></pre></div>
+<p>Generative laws separate three concerns: generators construct
+examples, laws state behavior over those examples, and a runner searches
+for a smaller counterexample. One call to <code>expect_law()</code>
+becomes one tinytest result even though the law is evaluated many
+times.</p>
+<p>In <code>s7contract</code>, these laws provide behavioral evidence
+for protocols whose operations are described by interfaces or traits.
+The <a href="protocol-laws.html">vector protocol</a> vignette defines
+one <code>VectorLike</code> law suite, runs it against two
+implementations, and finds a faulty slice method that satisfies the
+interface.</p>
+<div id="a-tinytest-property" class="section level2">
+<h2>A tinytest property</h2>
+<p>The generator below produces integer vectors and carries an
+integrated shrink tree. The law checks that reversing a vector twice
+returns the original value.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>reverse_law <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="st">&quot;reverse is involutive&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">gen_vector</span>(<span class="fu">gen_integer</span>(<span class="sc">-</span><span class="dv">100</span><span class="dt">L</span>, <span class="dv">100</span><span class="dt">L</span>), <span class="at">max =</span> <span class="dv">20</span><span class="dt">L</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  ),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(x) <span class="fu">identical</span>(<span class="fu">rev</span>(<span class="fu">rev</span>(x)), x)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">expect_law</span>(reverse_law, <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">20260902</span><span class="dt">L</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; ----- PASSED      : &lt;--&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;  call| expect_law(reverse_law, tests = 100, seed = 20260902)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;  info| Law &#39;reverse is involutive&#39; passed 100 tests (seed 20260902).</span></span></code></pre></div>
+</div>
+<div id="laws-over-an-s7-interface" class="section level2">
+<h2>Laws over an S7 interface</h2>
+<p>Generate non-negative radii to construct valid <code>Circle</code>
+objects. The law checks their areas through an interface that requires a
+double return value.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>Circle <span class="ot">&lt;-</span> <span class="fu">new_class</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="st">&quot;CirclePropertyVignette&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">radius =</span> class_double),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">validator =</span> <span class="cf">function</span>(self) {</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="cf">if</span> (self<span class="sc">@</span>radius <span class="sc">&lt;</span> <span class="dv">0</span>) <span class="st">&quot;`radius` must be non-negative.&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  }</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>area <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="st">&quot;area_property_vignette&quot;</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="st">&quot;x&quot;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="fu">S7_dispatch</span>()</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">method</span>(area, Circle) <span class="ot">&lt;-</span> <span class="cf">function</span>(x) pi <span class="sc">*</span> x<span class="sc">@</span>radius<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>HasArea <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  <span class="st">&quot;HasAreaPropertyVignette&quot;</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>    <span class="at">area =</span> <span class="fu">interface_requirement</span>(area, <span class="at">returns =</span> class_double)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>  )</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>)</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>circles <span class="ot">&lt;-</span> <span class="fu">gen_map</span>(</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  <span class="fu">gen_double</span>(<span class="dv">0</span>, <span class="dv">1000</span>),</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  <span class="cf">function</span>(radius) <span class="fu">Circle</span>(<span class="at">radius =</span> radius)</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>)</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>area_law <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>  <span class="st">&quot;non-negative radii have non-negative area&quot;</span>,</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(<span class="at">x =</span> circles),</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(x) <span class="fu">with</span>(HasArea, <span class="fu">area</span>(x)) <span class="sc">&gt;=</span> <span class="dv">0</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>)</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="fu">expect_law</span>(area_law, <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">20260902</span><span class="dt">L</span>)</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; ----- PASSED      : &lt;--&gt;</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt;  call| expect_law(area_law, tests = 100, seed = 20260902)</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt;  info| Law &#39;non-negative radii have non-negative area&#39; passed 100 tests (seed 20260902).</span></span></code></pre></div>
+</div>
+<div id="inspecting-and-replaying-a-failure" class="section level2">
+<h2>Inspecting and replaying a failure</h2>
+<p>Use <code>check_law()</code> when the structured result is needed
+independently of a test framework. This deliberately false law starts at
+ten and shrinks to zero.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>ten <span class="ot">&lt;-</span> <span class="fu">new_generator</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">draw =</span> <span class="cf">function</span>(size) <span class="dv">10</span><span class="dt">L</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">shrink =</span> <span class="cf">function</span>(value) {</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="cf">if</span> (value <span class="sc">==</span> <span class="dv">0</span><span class="dt">L</span>) <span class="fu">list</span>() <span class="cf">else</span> <span class="fu">list</span>(<span class="dv">0</span><span class="dt">L</span>, value <span class="sc">%/%</span> <span class="dv">2</span><span class="dt">L</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  },</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">&quot;ten&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">prototype =</span> <span class="fu">integer</span>()</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>negative_law <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="st">&quot;generated values are negative&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(<span class="at">x =</span> ten),</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(x) x <span class="sc">&lt;</span> <span class="dv">0</span><span class="dt">L</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>failure <span class="ot">&lt;-</span> <span class="fu">check_law</span>(negative_law, <span class="at">tests =</span> <span class="dv">10</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">20260902</span><span class="dt">L</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>failure</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; Law &#39;generated values are negative&#39; was falsified after 1 attempts and 1 shrinks (seed 20260902).</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; The law returned FALSE.</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; Shrinking stopped: no child of this counterexample preserves the failure.</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; Smallest counterexample found:</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; List of 1</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt;  $ x: int 0</span></span></code></pre></div>
+<p>The result records the seed, RNG kind, run parameters, original
+input, final counterexample, and shrink counts. The <code>minimal</code>
+field holds the last accepted failing candidate along the ordered shrink
+path, not a guaranteed smallest failure. <code>shrink_status</code>
+distinguishes exhaustion of the current candidate’s children, an
+evaluation budget, a shrinking error, and a run that needed no
+shrinking. If shrinking errors or warns, <code>shrink_condition</code>
+records that problem while the original and last failing examples remain
+available.</p>
+<p>Replay the same law and parameters with ordinary R function
+application:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>replayed <span class="ot">&lt;-</span> <span class="fu">do.call</span>(check_law, <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">law =</span> failure<span class="sc">@</span>law), failure<span class="sc">@</span>parameters))</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">identical</span>(replayed<span class="sc">@</span>counterexample<span class="sc">@</span>minimal, failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Runs use Mersenne-Twister, Inversion normals, and Rejection sampling,
+so changing the caller’s RNG kind does not change the generated
+sequence. Replay requires unchanged generator and law code, run
+parameters, and compatible R/package versions. Generators and laws must
+not depend on external mutable state or change the RNG configuration.
+Stored examples can still be tested directly when the generator
+changes.</p>
+<p>The caller’s RNG kind and state are restored on exit. Box-Muller
+normals are unsupported because R does not expose their cached draw for
+restoration; select another normal RNG kind before running laws.</p>
+</div>
+<div id="composition-and-shrinking" class="section level2">
+<h2>Composition and shrinking</h2>
+<p>Mapping transforms both the generated value and visited shrinks.
+Products combine independent generators and shrink one component at a
+time. Vectors remove contiguous chunks and then shrink elements,
+retaining their minimum length. Nesting vector generators produces lists
+of vectors, including empty inner vectors:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>nested <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;nested vectors retain their element type&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(<span class="at">x =</span> <span class="fu">gen_vector</span>(<span class="fu">gen_vector</span>(<span class="fu">gen_integer</span>(), <span class="at">max =</span> <span class="dv">4</span><span class="dt">L</span>), <span class="at">max =</span> <span class="dv">3</span><span class="dt">L</span>)),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(x) <span class="fu">is.list</span>(x) <span class="sc">&amp;&amp;</span> <span class="fu">all</span>(<span class="fu">vapply</span>(x, is.integer, <span class="fu">logical</span>(<span class="dv">1</span>)))</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">expect_law</span>(nested, <span class="at">tests =</span> <span class="dv">20</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; ----- PASSED      : &lt;--&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;  call| expect_law(nested, tests = 20, seed = 1)</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;  info| Law &#39;nested vectors retain their element type&#39; passed 20 tests (seed 1).</span></span></code></pre></div>
+<p>The runner constructs and transforms each shrink candidate only when
+visited. <code>shrinks = 0L</code> performs no shrink expansion. A
+custom <code>shrink</code> function still constructs its own list of
+candidates; the evaluation budget cannot bound the work performed inside
+user functions. Shrinkers and mapping functions must be deterministic,
+and mapped constructors must accept every visited shrink.</p>
+</div>
+<div id="dependent-inputs" class="section level2">
+<h2>Dependent inputs</h2>
+<p><code>gen_bind()</code> uses one generated value to construct the
+next generator. Here the sequence length and its bases belong to one
+dependent input. Every shrink still has exactly the declared length, so
+the law needs no discarded preconditions.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>sequences <span class="ot">&lt;-</span> <span class="fu">gen_bind</span>(<span class="fu">gen_integer</span>(<span class="dv">0</span><span class="dt">L</span>, <span class="dv">20</span><span class="dt">L</span>), <span class="cf">function</span>(n) {</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">gen_product</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    <span class="at">length =</span> <span class="fu">gen_constant</span>(n),</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>    <span class="at">bases =</span> <span class="fu">gen_vector</span>(<span class="fu">gen_element</span>(<span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;T&quot;</span>)), <span class="at">min =</span> n, <span class="at">max =</span> n)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  )</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>})</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>sequence_law <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="st">&quot;sequence length matches its declaration&quot;</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(<span class="at">x =</span> sequences),</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(x) <span class="fu">length</span>(x<span class="sc">$</span>bases) <span class="sc">==</span> x<span class="sc">$</span>length</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="fu">expect_law</span>(sequence_law, <span class="at">tests =</span> <span class="dv">40</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; ----- PASSED      : &lt;--&gt;</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;  call| expect_law(sequence_law, tests = 40, seed = 1)</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt;  info| Law &#39;sequence length matches its declaration&#39; passed 40 tests (seed 1).</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="fu">gen_example</span>(sequences, <span class="at">size =</span> <span class="dv">10</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">42</span><span class="dt">L</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; $length</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; $bases</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; character(0)</span></span></code></pre></div>
+<p>Shrinking first tries smaller source values and rebuilds the
+dependent generator, then shrinks its result. Each rebuild uses the same
+captured local seed and size. Random draws inside the law therefore do
+not change the regenerated candidates. The factory must depend only on
+its input and the scoped RNG, and its constructors must accept every
+visited source shrink.</p>
+</div>
+<div id="choices-and-recursive-values" class="section level2">
+<h2>Choices and recursive values</h2>
+<p><code>gen_element()</code> chooses a value; <code>gen_choice()</code>
+chooses a generator. Entries are ordered from simpler to more complex
+for shrinking. Optional <code>prob</code> weights control sampling;
+zero-weight entries are excluded from generation and shrinking. All
+entries with positive weight are available even at size zero.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>nullable <span class="ot">&lt;-</span> <span class="fu">gen_choice</span>(<span class="fu">gen_constant</span>(<span class="cn">NA_integer_</span>), <span class="fu">gen_integer</span>(), <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">9</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">gen_example</span>(<span class="fu">gen_vector</span>(nullable, <span class="at">min =</span> <span class="dv">6</span><span class="dt">L</span>, <span class="at">max =</span> <span class="dv">6</span><span class="dt">L</span>), <span class="at">size =</span> <span class="dv">10</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">42</span><span class="dt">L</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; [1] NA  4  1 -4 -7 NA</span></span></code></pre></div>
+<p><code>gen_sized()</code> builds a generator from the runner’s current
+size. <code>gen_resize()</code> overrides the size for one generator
+while leaving sibling generators alone. <code>gen_recursive()</code>
+supplies its expansion function with a child generator that uses half
+the current size, rounded down. At size zero, only the base generator
+runs. This supports nested lists, expression trees, or recursive S7
+objects.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>trees <span class="ot">&lt;-</span> <span class="fu">gen_recursive</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="fu">gen_element</span>(<span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;G&quot;</span>, <span class="st">&quot;T&quot;</span>)),</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="cf">function</span>(child) <span class="fu">gen_product</span>(<span class="at">left =</span> child, <span class="at">right =</span> child)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">gen_example</span>(trees, <span class="at">size =</span> <span class="dv">7</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">42</span><span class="dt">L</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; [1] &quot;G&quot;</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>leaf_count <span class="ot">&lt;-</span> <span class="cf">function</span>(tree) {</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.list</span>(tree)) <span class="fu">leaf_count</span>(tree<span class="sc">$</span>left) <span class="sc">+</span> <span class="fu">leaf_count</span>(tree<span class="sc">$</span>right) <span class="cf">else</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>}</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>tree_law <span class="ot">&lt;-</span> <span class="fu">new_law</span>(</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="st">&quot;binary trees have at least one leaf&quot;</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="at">generators =</span> <span class="fu">list</span>(<span class="at">tree =</span> trees),</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="at">holds =</span> <span class="cf">function</span>(tree) <span class="fu">leaf_count</span>(tree) <span class="sc">&gt;=</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="fu">expect_law</span>(tree_law, <span class="at">tests =</span> <span class="dv">30</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>, <span class="at">max_size =</span> <span class="dv">7</span><span class="dt">L</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt; ----- PASSED      : &lt;--&gt;</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt;  call| expect_law(tree_law, tests = 30, seed = 1, max_size = 7)</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt;  info| Law &#39;binary trees have at least one leaf&#39; passed 30 tests (seed 1).</span></span></code></pre></div>
+<p>Recursive size bounds depth, not total node count; the expansion
+function still controls branching. Shrinking can replace a recursive
+value with a base value before shrinking within a branch.
+<code>gen_no_shrink()</code> removes a generator’s shrinking when a
+value must remain fixed during the search. <code>gen_example()</code>
+draws one value without expanding shrinks and restores the caller’s RNG
+state.</p>
+</div>
+<div id="relationship-to-hedgehog" class="section level2">
+<h2>Relationship to Hedgehog</h2>
+<p>Generation and shrinking follow <a href="https://hedgehogqa.r-universe.dev/hedgehog">R Hedgehog</a> and <a href="https://hackage.haskell.org/package/hedgehog">Haskell
+Hedgehog</a>: generators carry lazy rose trees, preserving shrinking
+through composition. The corresponding operations in
+<code>s7contract</code> are:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Concept</th>
+<th align="left">s7contract</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mapping / functor composition</td>
+<td align="left"><code>gen_map()</code> transforms values and their
+shrink trees.</td>
+</tr>
+<tr class="even">
+<td align="left">Independent / applicative composition</td>
+<td align="left"><code>gen_product()</code> and named law arguments
+combine independent generators.</td>
+</tr>
+<tr class="odd">
+<td align="left">Dependent / monadic composition</td>
+<td align="left"><code>gen_bind()</code> rebuilds downstream generators
+when upstream inputs shrink.</td>
+</tr>
+<tr class="even">
+<td align="left">Size-aware generation</td>
+<td align="left">Integer ranges and vector lengths grow with size;
+<code>gen_sized()</code> and <code>gen_resize()</code> expose size
+control.</td>
+</tr>
+<tr class="odd">
+<td align="left">Choice and recursive generation</td>
+<td align="left"><code>gen_element()</code>, <code>gen_choice()</code>,
+and <code>gen_recursive()</code> retain integrated shrinking.</td>
+</tr>
+<tr class="even">
+<td align="left">Inspection and shrink control</td>
+<td align="left"><code>gen_example()</code> draws a reproducible value;
+<code>gen_no_shrink()</code> removes shrinking.</td>
+</tr>
+<tr class="odd">
+<td align="left">State-machine testing</td>
+<td align="left"><code>new_command()</code>,
+<code>gen_commands()</code>, and <code>new_state_law()</code> test
+sequential protocols against a model.</td>
+</tr>
+<tr class="even">
+<td align="left">Case coverage</td>
+<td align="left"><code>classify</code> labels generated inputs;
+<code>min_coverage</code> requires observed proportions within the test
+budget. See the <a href="protocol-laws.html#which-cases-were-tested">vector
+example</a>.</td>
+</tr>
+<tr class="odd">
+<td align="left">Numeric domains</td>
+<td align="left"><code>gen_double()</code> generates finite fractional
+values with a shrink origin; <code>gen_choice()</code> adds exceptional
+values with explicit weights.</td>
+</tr>
+<tr class="even">
+<td align="left">Selection domains</td>
+<td align="left"><code>gen_sample()</code> preserves sample cardinality
+and distinct source positions; <code>gen_subsequence()</code> preserves
+source order. See the <a href="protocol-laws.html">vector laws</a>.</td>
+</tr>
+<tr class="odd">
+<td align="left">Strings and calendar dates</td>
+<td align="left">Composed recipes exercise <a href="stateful-protocols.html">UTF-8 store keys</a> and <a href="calendar-intervals.html">whole-day intervals</a>.</td>
+</tr>
+<tr class="even">
+<td align="left">Behavioral contracts</td>
+<td align="left">Laws can exercise S7 interfaces and traits through
+ordinary calls.</td>
+</tr>
+<tr class="odd">
+<td align="left">Test-framework integration</td>
+<td align="left"><code>check_law()</code> returns structured results;
+<code>expect_law()</code> records one tinytest result.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

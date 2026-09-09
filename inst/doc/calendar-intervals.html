@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Laws for Calendar Intervals</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Laws for Calendar Intervals</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(S7)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(s7contract)</span></code></pre></div>
+<div id="whole-days-from-integer-offsets" class="section level2">
+<h2>Whole days from integer offsets</h2>
+<p>Calendar intervals promise to include both endpoints. Testing that
+promise needs ordered bounds, queries at those bounds, and ordinary
+dates between or outside them.</p>
+<p>This recipe maps integer offsets onto a fixed <code>Date</code>
+origin. Size zero draws the origin; size <code>s</code> draws uniformly
+within <code>origin ± s</code> days, clipped to the bounds. Shrinking
+moves offsets toward zero. Its <code>Date</code> prototype preserves the
+class when composed into vectors, including empty and nested
+vectors.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>whole_day <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">inherits</span>(x, <span class="st">&quot;Date&quot;</span>) <span class="sc">||</span> <span class="fu">length</span>(x) <span class="sc">!=</span> <span class="dv">1</span><span class="dt">L</span>) <span class="fu">return</span>(<span class="cn">FALSE</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  day <span class="ot">&lt;-</span> <span class="fu">as.double</span>(x)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="fu">is.finite</span>(day) <span class="sc">&amp;&amp;</span> day <span class="sc">==</span> <span class="fu">trunc</span>(day) <span class="sc">&amp;&amp;</span> <span class="fu">abs</span>(day) <span class="sc">&lt;=</span> .Machine<span class="sc">$</span>integer.max</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>}</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>date_generator <span class="ot">&lt;-</span> <span class="cf">function</span>(min, max, <span class="at">origin =</span> min) {</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  bounds <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">min =</span> min, <span class="at">max =</span> max, <span class="at">origin =</span> origin)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="cf">for</span> (name <span class="cf">in</span> <span class="fu">names</span>(bounds)) {</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">whole_day</span>(bounds[[name]])) {</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>      <span class="fu">stop</span>(name, <span class="st">&quot; must be one finite whole Date within the integer day range&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>    }</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  }</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  <span class="cf">if</span> (min <span class="sc">&gt;</span> max) <span class="fu">stop</span>(<span class="st">&quot;date bounds must be ordered&quot;</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  <span class="cf">if</span> (origin <span class="sc">&lt;</span> min <span class="sc">||</span> origin <span class="sc">&gt;</span> max) <span class="fu">stop</span>(<span class="st">&quot;origin must lie within the bounds&quot;</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>  offsets <span class="ot">&lt;-</span> <span class="fu">gen_integer</span>(<span class="fu">as.double</span>(min) <span class="sc">-</span> <span class="fu">as.double</span>(origin),</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>                         <span class="fu">as.double</span>(max) <span class="sc">-</span> <span class="fu">as.double</span>(origin))</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="fu">gen_map</span>(offsets, <span class="cf">function</span>(offset) <span class="fu">.Date</span>(<span class="fu">as.double</span>(origin) <span class="sc">+</span> offset),</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>          <span class="at">prototype =</span> <span class="fu">.Date</span>(<span class="fu">double</span>()))</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>}</span></code></pre></div>
+<p>Bounds and origins must be finite whole dates. This recipe restricts
+their day counts and the offsets from the origin to R’s non-missing
+integer range. It generates calendar days without a time zone or a
+dependency on today’s date. <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Dates.html">R’s
+Date documentation</a> warns that fractional day values can be hidden by
+printing, and that integer and double storage can represent the same
+date. The law compares dates with <code>==</code>, <code>&lt;=</code>,
+and <code>&gt;=</code> rather than requiring identical storage.</p>
+</div>
+<div id="an-inclusive-interval-protocol" class="section level2">
+<h2>An inclusive interval protocol</h2>
+<p>The class validator requires ordered whole-day bounds. The interface
+requires a membership operation accepting dates and returning logical
+values.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>interval_contains <span class="ot">&lt;-</span> <span class="fu">new_generic</span>(<span class="st">&quot;interval_contains&quot;</span>, <span class="st">&quot;x&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                                 <span class="cf">function</span>(x, day) <span class="fu">S7_dispatch</span>())</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>CalendarInterval <span class="ot">&lt;-</span> <span class="fu">new_interface</span>(<span class="st">&quot;CalendarInterval&quot;</span>, <span class="at">generics =</span> <span class="fu">list</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">contains =</span> <span class="fu">interface_requirement</span>(interval_contains,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="at">args =</span> <span class="fu">list</span>(<span class="at">day =</span> class_Date), <span class="at">returns =</span> class_logical)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>))</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>DayInterval <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;DayInterval&quot;</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">properties =</span> <span class="fu">list</span>(<span class="at">start =</span> class_Date, <span class="at">end =</span> class_Date),</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">validator =</span> <span class="cf">function</span>(self) {</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">whole_day</span>(self<span class="sc">@</span>start) <span class="sc">||</span> <span class="sc">!</span><span class="fu">whole_day</span>(self<span class="sc">@</span>end)) {</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>      <span class="fu">return</span>(<span class="st">&quot;bounds must be finite whole days within the integer day range&quot;</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>    }</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>    <span class="cf">if</span> (self<span class="sc">@</span>start <span class="sc">&gt;</span> self<span class="sc">@</span>end) <span class="st">&quot;start must not follow end&quot;</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  }</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>)</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="fu">method</span>(interval_contains, DayInterval) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, day) {</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  day <span class="sc">&gt;=</span> x<span class="sc">@</span>start <span class="sc">&amp;</span> day <span class="sc">&lt;=</span> x<span class="sc">@</span>end</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>}</span></code></pre></div>
+<p>Dependent generators rebuild valid intervals as their start or end
+shrinks. Query generation explicitly includes both endpoints and leap
+day. Coverage records those cases and intervals crossing New Year.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>first_day <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2023-12-28&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>last_day <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2024-03-02&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>new_year <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2024-01-01&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>leap_day <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2024-02-29&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>interval_law <span class="ot">&lt;-</span> <span class="cf">function</span>(make) {</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  cases <span class="ot">&lt;-</span> <span class="fu">gen_bind</span>(<span class="fu">date_generator</span>(first_day, last_day, new_year), <span class="cf">function</span>(start) {</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>    <span class="fu">gen_bind</span>(<span class="fu">date_generator</span>(start, last_day), <span class="cf">function</span>(end) {</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>      <span class="fu">gen_product</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>        <span class="at">x =</span> <span class="fu">gen_constant</span>(<span class="fu">make</span>(start, end)),</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>        <span class="at">start =</span> <span class="fu">gen_constant</span>(start), <span class="at">end =</span> <span class="fu">gen_constant</span>(end),</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>        <span class="at">day =</span> <span class="fu">gen_choice</span>(<span class="fu">gen_constant</span>(start), <span class="fu">gen_constant</span>(end),</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>                         <span class="fu">gen_constant</span>(leap_day),</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>                         <span class="fu">date_generator</span>(first_day, last_day, new_year))</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>      )</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>    })</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  })</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="fu">new_law</span>(<span class="st">&quot;calendar intervals include both bounds&quot;</span>, <span class="fu">list</span>(<span class="at">input =</span> cases),</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>    <span class="cf">function</span>(input) <span class="fu">with</span>(CalendarInterval, {</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>      <span class="fu">contains</span>(input<span class="sc">$</span>x, input<span class="sc">$</span>day) <span class="sc">==</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>        (input<span class="sc">$</span>day <span class="sc">&gt;=</span> input<span class="sc">$</span>start <span class="sc">&amp;&amp;</span> input<span class="sc">$</span>day <span class="sc">&lt;=</span> input<span class="sc">$</span>end)</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>    }),</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>    <span class="at">classify =</span> <span class="cf">function</span>(input) <span class="fu">c</span>(</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>      <span class="cf">if</span> (input<span class="sc">$</span>day <span class="sc">==</span> input<span class="sc">$</span>start) <span class="st">&quot;lower_bound&quot;</span>,</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>      <span class="cf">if</span> (input<span class="sc">$</span>day <span class="sc">==</span> input<span class="sc">$</span>end) <span class="st">&quot;upper_bound&quot;</span>,</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>      <span class="cf">if</span> (input<span class="sc">$</span>day <span class="sc">==</span> leap_day) <span class="st">&quot;leap_day&quot;</span>,</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>      <span class="cf">if</span> (input<span class="sc">$</span>start <span class="sc">&lt;</span> new_year <span class="sc">&amp;&amp;</span> input<span class="sc">$</span>end <span class="sc">&gt;=</span> new_year) <span class="st">&quot;year_crossing&quot;</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>    ),</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>    <span class="at">min_coverage =</span> <span class="fu">c</span>(<span class="at">lower_bound =</span> <span class="fl">0.15</span>, <span class="at">upper_bound =</span> <span class="fl">0.15</span>,</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>                     <span class="at">leap_day =</span> <span class="fl">0.15</span>, <span class="at">year_crossing =</span> <span class="fl">0.02</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>  )</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>}</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a>calendar_result <span class="ot">&lt;-</span> <span class="fu">check_law</span>(<span class="fu">interval_law</span>(DayInterval), <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>calendar_result<span class="sc">@</span>status</span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; [1] &quot;passed&quot;</span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a>calendar_result<span class="sc">@</span>coverage</span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt;           label count proportion minimum  met</span></span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; 1   lower_bound    22       0.22    0.15 TRUE</span></span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; 2   upper_bound    27       0.27    0.15 TRUE</span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; 3      leap_day    29       0.29    0.15 TRUE</span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; 4 year_crossing     9       0.09    0.02 TRUE</span></span></code></pre></div>
+</div>
+<div id="an-end-date-accidentally-excluded" class="section level2">
+<h2>An end date accidentally excluded</h2>
+<p>Changing <code>&lt;=</code> to <code>&lt;</code> keeps the required
+method available but violates the law. The reduced failure is a one-day
+interval queried on that same day.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>ExclusiveEnd <span class="ot">&lt;-</span> <span class="fu">new_class</span>(<span class="st">&quot;ExclusiveEnd&quot;</span>, <span class="at">parent =</span> DayInterval)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">method</span>(interval_contains, ExclusiveEnd) <span class="ot">&lt;-</span> <span class="cf">function</span>(x, day) {</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  day <span class="sc">&gt;=</span> x<span class="sc">@</span>start <span class="sc">&amp;</span> day <span class="sc">&lt;</span> x<span class="sc">@</span>end</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>}</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">implements</span>(ExclusiveEnd, CalendarInterval)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>calendar_failure <span class="ot">&lt;-</span> <span class="fu">check_law</span>(<span class="fu">interval_law</span>(ExclusiveEnd), <span class="at">tests =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">seed =</span> <span class="dv">1</span><span class="dt">L</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>calendar_failure</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; Law &#39;calendar intervals include both bounds&#39; was falsified after 2 attempts and 2 shrinks (seed 1).</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; The law returned FALSE.</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Shrinking stopped: no child of this counterexample preserves the failure.</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Smallest counterexample found:</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; List of 1</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;  $ input:List of 4</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;   ..$ x    : &lt;ExclusiveEnd&gt;</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   .. ..@ start: Date[1:1], format: &quot;2024-01-01&quot;</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;   .. ..@ end  : Date[1:1], format: &quot;2024-01-01&quot;</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt;   ..$ start: Date[1:1], format: &quot;2024-01-01&quot;</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;   ..$ end  : Date[1:1], format: &quot;2024-01-01&quot;</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;   ..$ day  : Date[1:1], format: &quot;2024-01-01&quot;</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; Case coverage (2 accepted cases; partial run):</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;   &quot;year_crossing&quot;: 0/2 (0%; minimum 2% unmet)</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;   &quot;lower_bound&quot;: 1/2 (50%; minimum 15%)</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;   &quot;upper_bound&quot;: 1/2 (50%; minimum 15%)</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt;   &quot;leap_day&quot;: 1/2 (50%; minimum 15%)</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>calendar_failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal<span class="sc">$</span>input[<span class="fu">c</span>(<span class="st">&quot;start&quot;</span>, <span class="st">&quot;end&quot;</span>, <span class="st">&quot;day&quot;</span>)]</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; $start</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2024-01-01&quot;</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; $end</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2024-01-01&quot;</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; $day</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2024-01-01&quot;</span></span></code></pre></div>
+<p>Replay the failure with its recorded parameters:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>calendar_replayed <span class="ot">&lt;-</span> <span class="fu">do.call</span>(check_law,</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">law =</span> calendar_failure<span class="sc">@</span>law), calendar_failure<span class="sc">@</span>parameters))</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">identical</span>(calendar_replayed<span class="sc">@</span>counterexample<span class="sc">@</span>minimal, calendar_failure<span class="sc">@</span>counterexample<span class="sc">@</span>minimal)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

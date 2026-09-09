@@ -1,23 +1,13 @@
-# Small internal helpers. Kept dependency-free on purpose.
-
 .abort <- function(..., call. = FALSE) {
   stop(sprintf(...), call. = call.)
-}
-
-.warn <- function(..., call. = FALSE) {
-  warning(sprintf(...), call. = call.)
 }
 
 .as_class_or_null <- function(x, arg = "x") {
   tryCatch(S7::as_class(x, arg = arg), error = function(e) NULL)
 }
 
-.is_s7_generic <- function(x) {
-  is.function(x) && inherits(x, "S7_generic")
-}
-
 .check_s7_generic <- function(x, arg = "generic") {
-  if (!.is_s7_generic(x)) {
+  if (!is.function(x) || !inherits(x, "S7_generic")) {
     .abort("`%s` must be an S7 generic created with S7::new_generic().", arg)
   }
   invisible(x)
@@ -30,7 +20,7 @@
   }
 
   nm <- tryCatch(nameOfClass(cls), error = function(e) NULL)
-  if (!is.null(nm) && length(nm) == 1 && !is.na(nm) && nzchar(nm)) {
+  if (length(nm) == 1L && isTRUE(nzchar(nm, keepNA = TRUE))) {
     return(nm)
   }
 
@@ -80,22 +70,6 @@
   .base_class_of(x)
 }
 
-.generic_label <- function(generic, fallback = "method") {
-  if (inherits(generic, "S7_generic")) {
-    return(generic@name)
-  }
-
-  line <- paste(utils::capture.output(print(generic))[1], collapse = "")
-  name <- sub("^.*<S7_generic>\\s*", "", line)
-  name <- sub("\\(.*$", "", name)
-  name <- trimws(name)
-  if (nzchar(name) && !identical(name, line)) {
-    return(name)
-  }
-
-  fallback
-}
-
 .register_s7_method <- function(generic, class, fun, replace = FALSE) {
   if (!is.function(fun)) {
     .abort("S7 method implementation must be a function")
@@ -107,10 +81,13 @@
       error = function(e) NULL
     )
     if (!is.null(existing)) {
-      .warn(
-        "An S7 method for %s and %s is already visible; registering anyway. Pass replace = TRUE to silence this warning.",
-        .generic_label(generic),
-        .class_label(class)
+      warning(
+        sprintf(
+          "An S7 method for %s and %s is already visible; registering anyway. Pass replace = TRUE to silence this warning.",
+          generic@name,
+          .class_label(class)
+        ),
+        call. = FALSE
       )
     }
   }

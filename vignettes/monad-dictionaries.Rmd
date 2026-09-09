@@ -1,0 +1,102 @@
+---
+title: "A Maybe Dictionary on S7"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A Maybe Dictionary on S7}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::read_chunk(
+  system.file("examples", "maybe-laws.R", package = "s7contract")
+)
+```
+
+```{r maybe-setup}
+```
+
+This S7 dictionary stores `pure` and `bind` as functions. `Just(value)` carries
+a value; `Nothing()` represents absence. An interface checks operation
+availability, while laws state the required behavior.
+
+## The dictionary
+
+`pure` wraps a value in `Just`. `bind` passes a `Just` payload to a function
+returning Maybe, and propagates `Nothing` without calling that function.
+
+```{r maybe-dictionary}
+```
+
+Binding `Nothing` leaves the second callback unevaluated:
+
+```{r maybe-use}
+```
+
+## Generated values and functions
+
+The input domain is `Nothing` or `Just` containing one integer from -10 to 10,
+with equal constructor probabilities. Functions come from three equally likely
+families: always return `Nothing`, add an integer from -5 to 5, or retain values
+at least a generated threshold in that range. Integer ranges expand with size.
+These functions are total on the tested inputs and intermediate values, which
+stay between -20 and 20.
+
+```{r maybe-domain}
+```
+
+Function descriptions remain data in counterexamples. Shrinking tries earlier
+constructors and function families, then moves integer parameters toward zero.
+The interpreter constructs each function independently of the dictionary under
+test. Equality compares the observable constructor and uses `identical()` for
+payloads, so integer and double payloads differ.
+
+## Three laws, one suite
+
+The [Haskell 2010 Report, §6.3.6](https://www.haskell.org/onlinereport/haskell2010/haskellch6.html)
+gives the three monad equations. Writing `pure` for the unit operation and
+`>>=` for bind:
+
+```text
+pure(a) >>= f              = f(a)
+m >>= pure                 = m
+(m >>= f) >>= g            = m >>= (x -> f(x) >>= g)
+```
+
+`maybe_laws(dictionary)` returns three ordinary laws. Each equation uses the
+same interpreted functions on both sides. Coverage labels describe reference
+outcomes of those functions, including absence at the input or after either
+function in a composition.
+
+```{r maybe-law-suite}
+```
+
+```{r maybe-checks}
+```
+
+These laws test the generated families of functions and integer payloads.
+`dict_bind()` calls the dictionary under test; `gen_bind()` composes generators
+and their shrink trees.
+
+## A default that breaks the laws
+
+This dictionary replaces every `Nothing` result with `Just(0L)`. Its operations
+still satisfy the structural interface:
+
+```{r maybe-broken}
+```
+
+Associativity fails because the default allows a later function to run on one
+side of the equation. The reduced input keeps both function descriptions:
+
+```{r maybe-counterexample}
+```
+
+The same law and recorded parameters reproduce the failure:
+
+```{r maybe-replay}
+```
+
+The [Haskell monad tutorial](https://www.haskell.org/tutorial/monads.html)
+develops the distinction between type-class operations and their laws.
